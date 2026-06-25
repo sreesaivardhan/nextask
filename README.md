@@ -1,8 +1,8 @@
 # NexTask
 
-> AI-powered real-time collaborative Kanban platform.
+> Project management platform.
 
-NexTask is a full-stack, production-grade project management platform featuring real-time collaboration via WebSockets, AI-powered sprint insights, GitHub issue importing, and a Chrome extension for capturing tasks from anywhere on the web.
+NexTask is a full-stack project management platform built on a clean, scalable architecture.
 
 Built for the Alfaleus Full Stack Assignment.
 
@@ -12,7 +12,7 @@ Built for the Alfaleus Full Stack Assignment.
 
 | Layer      | Technology                                      |
 |------------|-------------------------------------------------|
-| Frontend   | React 18, Vite, TypeScript, TailwindCSS, Zustand, React Router |
+| Frontend   | React 19, Vite, TypeScript, TailwindCSS, Zustand, React Router |
 | Backend    | Node.js, Express, TypeScript, Socket.io         |
 | Database   | PostgreSQL, Prisma ORM                          |
 | Shared     | TypeScript types                                |
