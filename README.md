@@ -1,7 +1,127 @@
 # NexTask
 
-> AI-powered real-time collaborative project management platform.
+> AI-powered real-time collaborative Kanban platform.
 
-NexTask is a modern Kanban-style collaboration platform featuring real-time synchronization, AI-powered sprint insights, GitHub issue importing, and a Chrome extension for capturing tasks from anywhere on the web.
+NexTask is a full-stack, production-grade project management platform featuring real-time collaboration via WebSockets, AI-powered sprint insights, GitHub issue importing, and a Chrome extension for capturing tasks from anywhere on the web.
 
 Built for the Alfaleus Full Stack Assignment.
+
+---
+
+## Tech Stack
+
+| Layer      | Technology                                      |
+|------------|-------------------------------------------------|
+| Frontend   | React 18, Vite, TypeScript, TailwindCSS, Zustand, React Router |
+| Backend    | Node.js, Express, TypeScript, Socket.io         |
+| Database   | PostgreSQL, Prisma ORM                          |
+| Shared     | TypeScript types                                |
+
+---
+
+## Project Structure
+
+```
+NexTask/
+├── client/          # Vite + React frontend
+├── server/          # Express + Socket.io backend
+├── shared/          # Shared TypeScript types
+├── .env.example     # Environment variable template
+├── CONTRACT.md      # Full API & Socket contract
+└── README.md
+```
+
+---
+
+## Prerequisites
+
+- Node.js ≥ 18
+- PostgreSQL ≥ 14
+- npm ≥ 9
+
+---
+
+## Setup
+
+### 1. Clone and install
+
+```bash
+git clone <repo-url>
+cd NexTask
+
+# Install all workspace dependencies
+cd client && npm install && cd ..
+cd server && npm install && cd ..
+cd shared && npm install && cd ..
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example server/.env
+# Edit server/.env with your values
+```
+
+### 3. Set up the database
+
+```bash
+cd server
+npm run prisma:migrate   # Run initial migration
+npm run prisma:generate  # Generate Prisma client
+```
+
+### 4. Start development servers
+
+```bash
+# Terminal 1 — Backend
+cd server && npm run dev
+
+# Terminal 2 — Frontend
+cd client && npm run dev
+```
+
+- Frontend: http://localhost:5173
+- Backend:  http://localhost:3001
+- Health:   http://localhost:3001/health
+
+---
+
+## Available Scripts
+
+### Client (`cd client`)
+
+| Script            | Description                  |
+|-------------------|------------------------------|
+| `npm run dev`     | Start Vite dev server        |
+| `npm run build`   | Production build             |
+| `npm run lint`    | Run ESLint                   |
+| `npm run format`  | Run Prettier                 |
+| `npm run preview` | Preview production build     |
+
+### Server (`cd server`)
+
+| Script                   | Description                    |
+|--------------------------|--------------------------------|
+| `npm run dev`            | Start with nodemon             |
+| `npm run build`          | Compile TypeScript             |
+| `npm run start`          | Run compiled output            |
+| `npm run lint`           | Run ESLint                     |
+| `npm run format`         | Run Prettier                   |
+| `npm run prisma:migrate` | Run database migrations        |
+| `npm run prisma:generate`| Generate Prisma client         |
+| `npm run prisma:studio`  | Open Prisma Studio             |
+
+---
+
+## API Contract
+
+See [CONTRACT.md](./CONTRACT.md) for the full REST and Socket.io contract.
+
+---
+
+## Health Check
+
+```
+GET /health
+→ { "status": "ok" }
+```
