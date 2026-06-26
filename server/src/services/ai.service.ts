@@ -371,6 +371,21 @@ export async function analyzeBoards(): Promise<void> {
           let existingInsightId = 'NONE';
           let newlyInsertedId = '';
 
+          const latestTaskInsight = await prisma.aIInsight.findFirst({
+            where: { 
+              boardId: board.id, 
+              type: 'TASK_DEADLINE',
+              data: {
+                path: ['taskId'],
+                equals: card.id
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+
+          const latestData = latestTaskInsight ? (latestTaskInsight.data as Record<string, unknown>) : null;
+          existingInsightId = latestTaskInsight ? latestTaskInsight.id : 'NONE';
+
           if (risk === 'LOW') {
             if (isCompletionCol) {
               decision = 'SKIPPED_DONE_COLUMN';
@@ -380,6 +395,22 @@ export async function analyzeBoards(): Promise<void> {
               decision = 'SKIPPED_LOW_RISK';
               reasonText = `Score ${score} is below insertion threshold.`;
               statsSkippedLowRisk++;
+            }
+
+            if (latestTaskInsight) {
+              await prisma.aIInsight.deleteMany({
+                where: {
+                  boardId: board.id,
+                  type: 'TASK_DEADLINE',
+                  data: {
+                    path: ['taskId'],
+                    equals: card.id
+                  }
+                }
+              });
+              reasonText += ` Removed obsolete insight ${latestTaskInsight.id}.`;
+              const io = getIO();
+              if (io) io.to(board.id).emit('ai:insight:removed', { insightId: latestTaskInsight.id, boardId: board.id });
             }
           } else {
             const type = 'TASK_DEADLINE';
@@ -400,20 +431,6 @@ export async function analyzeBoards(): Promise<void> {
               reasons
             };
 
-            const latestTaskInsight = await prisma.aIInsight.findFirst({
-              where: { 
-                boardId: board.id, 
-                type: 'TASK_DEADLINE',
-                data: {
-                  path: ['taskId'],
-                  equals: card.id
-                }
-              },
-              orderBy: { createdAt: 'desc' }
-            });
-
-            const latestData = latestTaskInsight ? (latestTaskInsight.data as Record<string, unknown>) : null;
-            
             duplicateFound = Boolean(
               latestTaskInsight &&
               latestData &&
@@ -423,8 +440,6 @@ export async function analyzeBoards(): Promise<void> {
               latestData.daysRemaining === data.daysRemaining &&
               JSON.stringify(latestData.reasons) === JSON.stringify(data.reasons)
             );
-
-            existingInsightId = latestTaskInsight ? latestTaskInsight.id : 'NONE';
 
             if (duplicateFound) {
               decision = 'SKIPPED_DUPLICATE';

@@ -15,6 +15,7 @@ interface InsightStore {
   insights: Record<string, AIInsight[]>;
   fetchInsights: (boardId: string) => Promise<void>;
   socketAddInsight: (insight: AIInsight) => void;
+  socketRemoveInsight: (insightId: string, boardId: string) => void;
 }
 
 export const useInsightStore = create<InsightStore>((set) => ({
@@ -70,6 +71,15 @@ export const useInsightStore = create<InsightStore>((set) => ({
 
       return {
         insights: { ...state.insights, [insight.boardId]: newInsights },
+      };
+    });
+  },
+  socketRemoveInsight: (insightId: string, boardId: string) => {
+    set((state) => {
+      const current = state.insights[boardId] || [];
+      const filtered = current.filter(i => i.id !== insightId);
+      return {
+        insights: { ...state.insights, [boardId]: filtered },
       };
     });
   },

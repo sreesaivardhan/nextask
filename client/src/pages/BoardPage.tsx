@@ -38,7 +38,7 @@ export function BoardPage(): React.ReactElement {
     socketAddCard, socketUpdateCard, socketRemoveCard, socketMoveCard } = useCardStore();
   const { socketAddComment, socketRemoveComment } = useCommentStore();
   const { socketAddActivity } = useActivityStore();
-  const { socketAddInsight } = useInsightStore();
+  const { socketAddInsight, socketRemoveInsight } = useInsightStore();
   const { members: boardMemberMap, fetchMembers } = useBoardMemberStore();
   const { user } = useSessionStore();
 
@@ -176,6 +176,10 @@ export function BoardPage(): React.ReactElement {
       console.log('Board ID:', insight.boardId);
       socketAddInsight(insight);
     };
+    
+    const onAiInsightRemoved = ({ insightId, boardId }: { insightId: string, boardId: string }) => {
+      socketRemoveInsight(insightId, boardId);
+    };
 
     console.log('Component mounted');
     console.log('Listener registered');
@@ -194,6 +198,7 @@ export function BoardPage(): React.ReactElement {
     socket.on('activity:created', onActivityCreated);
     socket.on('card:typing', onCardTyping);
     socket.on('ai:insight', onAiInsight);
+    socket.on('ai:insight:removed', onAiInsightRemoved);
 
     // Capture ref value for cleanup (ESLint react-hooks/exhaustive-deps)
     const timers = typingTimers.current;
@@ -216,13 +221,14 @@ export function BoardPage(): React.ReactElement {
       socket.off('activity:created', onActivityCreated);
       socket.off('card:typing', onCardTyping);
       socket.off('ai:insight', onAiInsight);
+      socket.off('ai:insight:removed', onAiInsightRemoved);
       // Clear all typing timers
       Object.values(timers).forEach(clearTimeout);
     };
   }, [boardId, handleReconnect, socketUpdateBoard,
     socketAddColumn, socketUpdateColumn, socketRemoveColumn, socketMoveColumn,
     socketAddCard, socketUpdateCard, socketRemoveCard, socketMoveCard,
-    socketAddComment, socketRemoveComment, socketAddActivity, socketAddInsight]);
+    socketAddComment, socketRemoveComment, socketAddActivity, socketAddInsight, socketRemoveInsight]);
 
   // ── Column handlers ───────────────────────────────────────────────────────
   const handleCreateColumn = async (e: React.FormEvent) => {

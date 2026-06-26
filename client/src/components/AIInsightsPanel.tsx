@@ -9,7 +9,9 @@ const formatPercentage = (value: number | string | undefined, isDecimal: boolean
   if (value === undefined || value === null) return '';
   const num = Number(value);
   if (isNaN(num)) return '';
-  return Math.round(isDecimal ? num * 100 : num) + '%';
+  let percent = isDecimal ? num * 100 : num;
+  percent = Math.max(0, Math.min(100, percent));
+  return Math.round(percent) + '%';
 };
 
 const formatReason = (reason: string) => {
