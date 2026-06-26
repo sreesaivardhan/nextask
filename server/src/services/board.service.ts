@@ -26,18 +26,34 @@ export class BoardService {
     return boardRepository.create(userId, { name: trimmedName });
   }
 
-  async updateBoard(boardId: string, userId: string, name: string): Promise<Board> {
+  async updateBoard(boardId: string, userId: string, data: { name?: string; sprintEndDate?: Date | null; complexityMax?: number | null }): Promise<Board> {
     const hasAccess = await boardRepository.isMember(boardId, userId);
     if (!hasAccess) {
       throw new Error('Unauthorized access to board');
     }
 
-    const trimmedName = name.trim();
-    if (!trimmedName || trimmedName.length > 100) {
-      throw new Error('Invalid board name');
+    const updateData: { name?: string; sprintEndDate?: Date | null; complexityMax?: number | null } = {};
+    
+    if (data.name !== undefined) {
+      const trimmedName = data.name.trim();
+      if (!trimmedName || trimmedName.length > 100) {
+        throw new Error('Invalid board name');
+      }
+      updateData.name = trimmedName;
     }
 
-    return boardRepository.update(boardId, { name: trimmedName });
+    if (data.sprintEndDate !== undefined) {
+      updateData.sprintEndDate = data.sprintEndDate;
+    }
+
+    if (data.complexityMax !== undefined) {
+      if (data.complexityMax !== null && (data.complexityMax < 1 || data.complexityMax > 10 || !Number.isInteger(data.complexityMax))) {
+        throw new Error('Invalid complexity threshold. Must be an integer between 1 and 10.');
+      }
+      updateData.complexityMax = data.complexityMax;
+    }
+
+    return boardRepository.update(boardId, updateData);
   }
 
   async deleteBoard(boardId: string, userId: string): Promise<void> {

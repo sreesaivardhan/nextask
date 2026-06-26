@@ -15,6 +15,8 @@ export function DashboardPage(): React.ReactElement {
   const [newBoardName, setNewBoardName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [editingSprintEndDate, setEditingSprintEndDate] = useState<string>('');
+  const [editingComplexityMax, setEditingComplexityMax] = useState<number | ''>(5);
   const [boardToDelete, setBoardToDelete] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export function DashboardPage(): React.ReactElement {
     }
   };
 
-  const handleRename = async (id: string) => {
+  const handleUpdateBoard = async (id: string) => {
     const trimmedName = editingName.trim();
     if (!trimmedName) {
       addToast('Board name is required', 'error');
@@ -81,10 +83,38 @@ export function DashboardPage(): React.ReactElement {
       addToast('Board name must be 100 characters or fewer', 'error');
       return;
     }
+
+    let sprintEndDateISO: string | null = null;
+    if (editingSprintEndDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const [y, m, d] = editingSprintEndDate.split('-').map(Number);
+      const localSelectedDate = new Date(y, m - 1, d);
+      
+      if (localSelectedDate < today) {
+        addToast('Sprint end date cannot be in the past', 'error');
+        return;
+      }
+      sprintEndDateISO = localSelectedDate.toISOString();
+    }
+
+    let parsedComplexity = 5;
+    if (editingComplexityMax !== '') {
+      parsedComplexity = Number(editingComplexityMax);
+      if (!Number.isInteger(parsedComplexity) || parsedComplexity < 1 || parsedComplexity > 10) {
+        addToast('Complexity threshold must be an integer between 1 and 10', 'error');
+        return;
+      }
+    }
+
     try {
-      await updateBoard(id, trimmedName);
+      await updateBoard(id, { 
+        name: trimmedName,
+        sprintEndDate: sprintEndDateISO,
+        complexityMax: parsedComplexity
+      });
       setEditingId(null);
-      addToast('Board renamed', 'success');
+      addToast('Board settings saved', 'success');
     } catch (err) {
       if (err instanceof Error) addToast(err.message, 'error');
     }
@@ -160,21 +190,48 @@ export function DashboardPage(): React.ReactElement {
           {boards.map((board) => (
             <div key={board.id} className="bg-white p-6 rounded shadow border border-gray-200 flex flex-col">
               {editingId === board.id ? (
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    value={editingName}
-                    onChange={(e) => setEditingName(e.target.value)}
-                    className="flex-1 border p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoFocus
-                    maxLength={100}
-                  />
-                  <button onClick={() => handleRename(board.id)} className="text-green-600 font-medium hover:underline">
-                    Save
-                  </button>
-                  <button onClick={() => setEditingId(null)} className="text-gray-500 font-medium hover:underline">
-                    Cancel
-                  </button>
+                <div className="flex flex-col gap-3 mb-4 flex-1">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Board Name</label>
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      autoFocus
+                      maxLength={100}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Sprint End Date</label>
+                      <input
+                        type="date"
+                        value={editingSprintEndDate}
+                        onChange={(e) => setEditingSprintEndDate(e.target.value)}
+                        className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Max Complexity (1-10)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={editingComplexityMax}
+                        onChange={(e) => setEditingComplexityMax(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-1">
+                    <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-gray-600 hover:text-gray-800 font-medium text-sm">
+                      Cancel
+                    </button>
+                    <button onClick={() => handleUpdateBoard(board.id)} className="bg-green-600 text-white px-3 py-1.5 rounded font-medium hover:bg-green-700 text-sm">
+                      Save Settings
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex justify-between items-start mb-4 overflow-hidden">
@@ -197,10 +254,12 @@ export function DashboardPage(): React.ReactElement {
                     onClick={() => {
                       setEditingId(board.id);
                       setEditingName(board.name);
+                      setEditingSprintEndDate(board.sprintEndDate ? new Date(board.sprintEndDate).toISOString().split('T')[0] : '');
+                      setEditingComplexityMax(board.complexityMax ?? 5);
                     }}
                     className="text-gray-500 hover:text-blue-600 font-medium"
                   >
-                    Rename
+                    Settings
                   </button>
                   <button
                     onClick={() => handleDelete(board.id, board.name)}

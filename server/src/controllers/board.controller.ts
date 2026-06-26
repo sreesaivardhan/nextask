@@ -64,8 +64,26 @@ export class BoardController {
     try {
       const userId = req.user!.id;
       const { boardId } = req.params;
-      const { name } = req.body;
-      const board = await boardService.updateBoard(boardId, userId, name || '');
+      const { name, sprintEndDate, complexityMax } = req.body;
+      
+      let parsedDate: Date | null | undefined = undefined;
+      if (sprintEndDate !== undefined) {
+        if (sprintEndDate === null) {
+          parsedDate = null;
+        } else {
+          parsedDate = new Date(sprintEndDate);
+          if (isNaN(parsedDate.getTime())) {
+            res.status(400).json({ error: 'Invalid sprint end date' });
+            return;
+          }
+        }
+      }
+
+      const board = await boardService.updateBoard(boardId, userId, { 
+        name, 
+        sprintEndDate: parsedDate, 
+        complexityMax 
+      });
       res.status(200).json(board);
       // Broadcast to board room (members viewing the board) AND user room (dashboard).
       const socketId = senderSocketId(req);
