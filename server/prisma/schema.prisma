@@ -23,6 +23,7 @@ enum AIInsightType {
   BOTTLENECK
   SPRINT_RISK
   DIGEST
+  TASK_DEADLINE
 }
 
 // ─── Models ───────────────────────────────────────────────────────────────────

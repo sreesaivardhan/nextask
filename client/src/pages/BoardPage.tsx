@@ -427,6 +427,7 @@ export function BoardPage(): React.ReactElement {
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    const capturedActiveCard = activeCard;
     setActiveCard(null);
     const { active, over } = event;
     if (!over || !boardId) return;
@@ -436,7 +437,7 @@ export function BoardPage(): React.ReactElement {
     const isOverColumn = over.data.current?.type === 'Column';
     
     // Original card details from the drag start
-    const originalCard = active.data.current?.card as Card;
+    const originalCard = capturedActiveCard || (active.data.current?.card as Card);
     if (!originalCard) return;
 
     const activeColumnId = originalCard.columnId;

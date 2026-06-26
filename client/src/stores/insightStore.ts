@@ -24,16 +24,23 @@ export const useInsightStore = create<InsightStore>((set) => ({
       const data = await api.get(`/boards/${boardId}/ai-insights`);
       
       // The backend returns insights ordered by createdAt DESC.
-      // We only want to keep the latest insight for each type on the dashboard.
-      const latestByType = new Map<string, AIInsight>();
+      // We want to keep the latest insight for BOTTLENECK and SPRINT_RISK,
+      // and the latest insight PER TASK for TASK_DEADLINE.
+      const latestByKey = new Map<string, AIInsight>();
+      
       for (const insight of data) {
-        if (!latestByType.has(insight.type)) {
-          latestByType.set(insight.type, insight);
+        let key = insight.type;
+        if (insight.type === 'TASK_DEADLINE' && insight.data?.taskId) {
+          key = `TASK_DEADLINE_${insight.data.taskId}`;
+        }
+        
+        if (!latestByKey.has(key)) {
+          latestByKey.set(key, insight);
         }
       }
 
       set((state) => ({
-        insights: { ...state.insights, [boardId]: Array.from(latestByType.values()) },
+        insights: { ...state.insights, [boardId]: Array.from(latestByKey.values()) },
       }));
     } catch (error) {
       console.error('Failed to fetch AI insights:', error);
@@ -43,8 +50,15 @@ export const useInsightStore = create<InsightStore>((set) => ({
     set((state) => {
       const current = state.insights[insight.boardId] || [];
       
-      // We want to replace the existing insight of the same type, rather than appending
-      const existingIndex = current.findIndex(i => i.type === insight.type);
+      // For BOTTLENECK and SPRINT_RISK, replace by type.
+      // For TASK_DEADLINE, replace by taskId.
+      const existingIndex = current.findIndex(i => {
+        if (insight.type === 'TASK_DEADLINE') {
+          return i.type === 'TASK_DEADLINE' && i.data?.taskId === insight.data?.taskId;
+        }
+        return i.type === insight.type;
+      });
+      
       let newInsights;
       
       if (existingIndex >= 0) {

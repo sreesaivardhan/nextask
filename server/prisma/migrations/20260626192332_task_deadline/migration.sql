@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "AIInsightType" ADD VALUE 'TASK_DEADLINE';
