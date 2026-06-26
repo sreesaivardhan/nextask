@@ -56,6 +56,17 @@ model Session {
   @@index([expiresAt])
 }
 
+/// Persists express-session data so sessions survive backend restarts.
+model ExpressSession {
+  sid       String   @id
+  data      String
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 model Board {
   id            String    @id @default(cuid())
   name          String

@@ -8,7 +8,9 @@ export class SessionService {
     if (!trimmed) {
       throw new Error('Display name is required');
     }
-
+    if (trimmed.length > 50) {
+      throw new Error('Display name must be 50 characters or fewer');
+    }
     return userRepository.create(trimmed);
   }
 

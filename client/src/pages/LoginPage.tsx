@@ -16,14 +16,19 @@ export function LoginPage(): React.ReactElement {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!displayName.trim()) {
+    const trimmed = displayName.trim();
+    if (!trimmed) {
       addToast('Please enter a display name', 'error');
+      return;
+    }
+    if (trimmed.length > 50) {
+      addToast('Display name must be 50 characters or fewer', 'error');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createSession(displayName);
+      await createSession(trimmed);
       navigate('/');
     } catch (err) {
       if (err instanceof Error) {
@@ -52,6 +57,7 @@ export function LoginPage(): React.ReactElement {
               placeholder="e.g. Sai"
               disabled={isSubmitting}
               autoFocus
+              maxLength={50}
             />
           </div>
           <button

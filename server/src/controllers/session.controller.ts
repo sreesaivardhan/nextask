@@ -18,6 +18,10 @@ export class SessionController {
 
       res.status(201).json(user);
     } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Display name')) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
       next(error);
     }
   }

@@ -5,16 +5,25 @@ import { useBoardStore } from '../stores/boardStore';
 import { useToastStore } from '../stores/toastStore';
 import { io, Socket } from 'socket.io-client';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useCardStore, type Card } from '../stores/cardStore';
+import { CardModal } from '../components/CardModal';
+import { useBoardMemberStore } from '../stores/boardMemberStore';
 
 export function BoardPage(): React.ReactElement {
   const { boardId } = useParams<{ boardId: string }>();
   const { columns, fetchColumns, createColumn, updateColumn, deleteColumn, reorderColumn, isLoading } = useColumnStore();
   const { boards, fetchBoards } = useBoardStore();
   const { addToast } = useToastStore();
+  const { cards, fetchCards, createCard } = useCardStore();
+  const { members: boardMemberMap, fetchMembers } = useBoardMemberStore();
+
   const [newColumnName, setNewColumnName] = useState('');
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnName, setEditingColumnName] = useState('');
   const [columnToDelete, setColumnToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const [newCardTitle, setNewCardTitle] = useState<{ [columnId: string]: string }>({});
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   
   const board = boards.find((b) => b.id === boardId);
 
@@ -24,8 +33,10 @@ export function BoardPage(): React.ReactElement {
     }
     if (boardId) {
       fetchColumns(boardId);
+      fetchCards(boardId);
+      fetchMembers(boardId);
     }
-  }, [boardId, boards.length, fetchBoards, fetchColumns]);
+  }, [boardId, boards.length, fetchBoards, fetchColumns, fetchCards, fetchMembers]);
 
   // Socket.io board room join
   useEffect(() => {
@@ -48,12 +59,17 @@ export function BoardPage(): React.ReactElement {
   const handleCreateColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!boardId) return;
-    if (!newColumnName.trim()) {
+    const trimmedName = newColumnName.trim();
+    if (!trimmedName) {
       addToast('Column name is required', 'error');
       return;
     }
+    if (trimmedName.length > 100) {
+      addToast('Column name must be 100 characters or fewer', 'error');
+      return;
+    }
     try {
-      await createColumn(boardId, newColumnName);
+      await createColumn(boardId, trimmedName);
       setNewColumnName('');
     } catch (err) {
       if (err instanceof Error) addToast(err.message, 'error');
@@ -62,12 +78,17 @@ export function BoardPage(): React.ReactElement {
 
   const handleRenameColumn = async (columnId: string) => {
     if (!boardId) return;
-    if (!editingColumnName.trim()) {
+    const trimmedName = editingColumnName.trim();
+    if (!trimmedName) {
       addToast('Column name is required', 'error');
       return;
     }
+    if (trimmedName.length > 100) {
+      addToast('Column name must be 100 characters or fewer', 'error');
+      return;
+    }
     try {
-      await updateColumn(boardId, columnId, editingColumnName);
+      await updateColumn(boardId, columnId, trimmedName);
       setEditingColumnId(null);
     } catch (err) {
       if (err instanceof Error) addToast(err.message, 'error');
@@ -119,6 +140,24 @@ export function BoardPage(): React.ReactElement {
     }
   };
 
+  const handleCreateCard = async (e: React.FormEvent, columnId: string) => {
+    e.preventDefault();
+    if (!boardId) return;
+    const title = newCardTitle[columnId] || '';
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return;
+    if (trimmedTitle.length > 200) {
+      addToast('Card title must be 200 characters or fewer', 'error');
+      return;
+    }
+    try {
+      await createCard(boardId, columnId, trimmedTitle);
+      setNewCardTitle((prev) => ({ ...prev, [columnId]: '' }));
+    } catch (err) {
+      if (err instanceof Error) addToast(err.message, 'error');
+    }
+  };
+
   if (!board && !isLoading) {
     return <div className="p-6">Loading board...</div>;
   }
@@ -129,7 +168,7 @@ export function BoardPage(): React.ReactElement {
         <Link to="/" className="text-gray-500 hover:text-gray-700">
           &larr; Back to Dashboard
         </Link>
-        <h1 className="text-2xl font-bold text-gray-800 break-words">{board?.name}</h1>
+        <h1 className="text-2xl font-bold text-gray-800 truncate flex-1" title={board?.name}>{board?.name}</h1>
       </div>
 
       <div className="flex-1 overflow-x-auto p-6 flex gap-6 items-start bg-gray-50 min-h-0">
@@ -155,8 +194,8 @@ export function BoardPage(): React.ReactElement {
                 </div>
               ) : (
                 <>
-                  <h3 className="font-bold text-gray-700 truncate mr-2" title={column.name}>{column.name}</h3>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="font-bold text-gray-700 truncate flex-1 mr-2" title={column.name}>{column.name}</h3>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button onClick={() => handleMoveLeft(index)} disabled={index === 0} className="text-gray-500 hover:text-blue-600 disabled:opacity-30" title="Move Left">&larr;</button>
                     <button onClick={() => handleMoveRight(index)} disabled={index === columns.length - 1} className="text-gray-500 hover:text-blue-600 disabled:opacity-30" title="Move Right">&rarr;</button>
                     <button onClick={() => { setEditingColumnId(column.id); setEditingColumnName(column.name); }} className="text-gray-500 hover:text-blue-600 text-sm" title="Rename">✎</button>
@@ -165,9 +204,47 @@ export function BoardPage(): React.ReactElement {
                 </>
               )}
             </div>
-            <div className="p-3 flex-1 overflow-y-auto">
-              {/* Cards will go here later */}
-              <div className="text-sm text-gray-400 italic text-center py-4">No cards yet</div>
+            <div className="p-3 flex-1 overflow-y-auto flex flex-col gap-2">
+              {(cards[column.id] || []).map((card) => (
+                <div 
+                  key={card.id} 
+                  className="bg-white p-3 rounded shadow-sm border border-gray-200 cursor-pointer hover:border-blue-300 hover:shadow transition-all group"
+                  onClick={() => setSelectedCard(card)}
+                >
+                  <div className="flex justify-between items-start mb-2 overflow-hidden">
+                    <h4 className="font-semibold text-gray-800 text-sm truncate flex-1 mr-2" title={card.title}>{card.title}</h4>
+                    {card.complexity && (
+                      <span className="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
+                        {card.complexity}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {card.description && (
+                    <p className="text-xs text-gray-500 line-clamp-2 mb-2">{card.description}</p>
+                  )}
+                  
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {card.assigneeId
+                        ? ((boardId && boardMemberMap[boardId]?.find((m) => m.userId === card.assigneeId)?.user.displayName) ?? '...')
+                        : 'Unassigned'}
+                    </span>
+                    <span className="text-xs text-gray-400">v{card.version}</span>
+                  </div>
+                </div>
+              ))}
+              
+              <form onSubmit={(e) => handleCreateCard(e, column.id)} className="mt-2">
+                <input
+                  type="text"
+                  placeholder="Add a card..."
+                  className="w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  value={newCardTitle[column.id] || ''}
+                  onChange={(e) => setNewCardTitle((prev) => ({ ...prev, [column.id]: e.target.value }))}
+                  maxLength={200}
+                />
+              </form>
             </div>
           </div>
         ))}
@@ -195,6 +272,12 @@ export function BoardPage(): React.ReactElement {
         onConfirm={confirmDeleteColumn}
         onCancel={() => setColumnToDelete(null)}
         confirmText="Delete"
+      />
+      <CardModal
+        card={selectedCard}
+        isOpen={selectedCard !== null}
+        onClose={() => setSelectedCard(null)}
+        boardComplexityMax={board && 'complexityMax' in board ? (board as { complexityMax?: number }).complexityMax : 5}
       />
     </div>
   );

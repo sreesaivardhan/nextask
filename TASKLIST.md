@@ -7,8 +7,8 @@
 - [x] Column CRUD
 
 ## Sprint 2
-- [ ] Card CRUD
-- [ ] Activity Log
+- [x] Card CRUD
+- [x] Activity Log
 - [ ] Socket.io
 
 ## Sprint 3

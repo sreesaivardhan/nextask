@@ -19,12 +19,17 @@ export function DashboardPage(): React.ReactElement {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBoardName.trim()) {
+    const trimmedName = newBoardName.trim();
+    if (!trimmedName) {
       addToast('Board name is required', 'error');
       return;
     }
+    if (trimmedName.length > 100) {
+      addToast('Board name must be 100 characters or fewer', 'error');
+      return;
+    }
     try {
-      await createBoard(newBoardName);
+      await createBoard(trimmedName);
       setNewBoardName('');
       setIsCreating(false);
       addToast('Board created', 'success');
@@ -34,12 +39,17 @@ export function DashboardPage(): React.ReactElement {
   };
 
   const handleRename = async (id: string) => {
-    if (!editingName.trim()) {
+    const trimmedName = editingName.trim();
+    if (!trimmedName) {
       addToast('Board name is required', 'error');
       return;
     }
+    if (trimmedName.length > 100) {
+      addToast('Board name must be 100 characters or fewer', 'error');
+      return;
+    }
     try {
-      await updateBoard(id, editingName);
+      await updateBoard(id, trimmedName);
       setEditingId(null);
       addToast('Board renamed', 'success');
     } catch (err) {
@@ -134,8 +144,10 @@ export function DashboardPage(): React.ReactElement {
                   </button>
                 </div>
               ) : (
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-xl font-bold text-gray-800 break-words">{board.name}</h2>
+                <div className="flex justify-between items-start mb-4 overflow-hidden">
+                  <h2 className="text-xl font-bold text-gray-800 truncate pr-2" title={board.name}>
+                    {board.name}
+                  </h2>
                 </div>
               )}
 
