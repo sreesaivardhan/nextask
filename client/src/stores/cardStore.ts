@@ -36,7 +36,7 @@ interface CardStore {
   moveCard: (
     cardId: string,
     version: number,
-    fromColumnId: string,
+    _fromColumnId: string,
     toColumnId: string,
     newPosition: number
   ) => Promise<Card>;
@@ -44,7 +44,7 @@ interface CardStore {
   socketAddCard: (card: Card) => void;
   socketUpdateCard: (card: Card) => void;
   socketRemoveCard: (cardId: string, columnId: string) => void;
-  socketMoveCard: (card: Card, fromColumnId: string) => void;
+  socketMoveCard: (card: Card) => void;
 }
 
 export const useCardStore = create<CardStore>((set, get) => ({
@@ -103,25 +103,27 @@ export const useCardStore = create<CardStore>((set, get) => ({
       },
     });
   },
-  moveCard: async (cardId, version, fromColumnId, toColumnId, newPosition) => {
-    // Optimistic update
+  moveCard: async (cardId, version, _fromColumnId, toColumnId, newPosition) => {
     const currentCards = get().cards;
-    const cardToMove = currentCards[fromColumnId]?.find((c) => c.id === cardId);
+    
+    let cardToMove: Card | undefined;
+    for (const col of Object.values(currentCards)) {
+      cardToMove = col.find((c) => c.id === cardId);
+      if (cardToMove) break;
+    }
     
     if (!cardToMove) throw new Error('Card not found locally');
 
     const optimisticCard = { ...cardToMove, columnId: toColumnId, position: newPosition, version: version + 1 };
     
-    const newFromCol = currentCards[fromColumnId].filter((c) => c.id !== cardId);
-    const newToCol = [...(currentCards[toColumnId] || []), optimisticCard].sort((a, b) => a.position - b.position);
+    const newCards = { ...currentCards };
+    for (const colId of Object.keys(newCards)) {
+      newCards[colId] = newCards[colId].filter((c) => c.id !== cardId);
+    }
+    
+    newCards[toColumnId] = [...(newCards[toColumnId] || []), optimisticCard].sort((a, b) => a.position - b.position);
 
-    set({
-      cards: {
-        ...currentCards,
-        [fromColumnId]: newFromCol,
-        [toColumnId]: newToCol,
-      },
-    });
+    set({ cards: newCards });
 
     try {
       const updatedCard = await api.put(`/cards/${cardId}/move`, {
@@ -130,16 +132,16 @@ export const useCardStore = create<CardStore>((set, get) => ({
         position: newPosition,
       });
 
-      // Update with server truth
       const latestCards = get().cards;
-      set({
-        cards: {
-          ...latestCards,
-          [toColumnId]: (latestCards[toColumnId] || [])
-            .map((c) => (c.id === cardId ? updatedCard : c))
-            .sort((a, b) => a.position - b.position),
-        },
-      });
+      const latestWithUpdate = { ...latestCards };
+      
+      for (const colId of Object.keys(latestWithUpdate)) {
+        latestWithUpdate[colId] = latestWithUpdate[colId].filter((c) => c.id !== cardId);
+      }
+      
+      latestWithUpdate[updatedCard.columnId] = [...(latestWithUpdate[updatedCard.columnId] || []), updatedCard].sort((a, b) => a.position - b.position);
+
+      set({ cards: latestWithUpdate });
       return updatedCard;
     } catch (err) {
       // Revert optimistic update
@@ -151,9 +153,18 @@ export const useCardStore = create<CardStore>((set, get) => ({
   // ── Socket-driven mutations ──────────────────────────────────────────────────
   socketAddCard: (card) => {
     const current = get().cards;
+    
+    // Check if it already exists ANYWHERE to avoid duplicates
+    let exists = false;
+    for (const colCards of Object.values(current)) {
+      if (colCards.some((c) => c.id === card.id)) {
+        exists = true;
+        break;
+      }
+    }
+    if (exists) return;
+
     const colCards = current[card.columnId] || [];
-    // Avoid duplicates (our own REST response already added it)
-    if (colCards.some((c) => c.id === card.id)) return;
     set({
       cards: {
         ...current,
@@ -189,20 +200,21 @@ export const useCardStore = create<CardStore>((set, get) => ({
       },
     });
   },
-  socketMoveCard: (card, fromColumnId) => {
+  socketMoveCard: (card) => {
     const current = get().cards;
-    // Remove from old column
-    const fromCol = (current[fromColumnId] || []).filter((c) => c.id !== card.id);
-    // Add to new column (avoid duplicates)
-    const toCol = (current[card.columnId] || []).filter((c) => c.id !== card.id);
-    toCol.push(card);
+    const nextCards = { ...current };
+    
+    // Remove from all columns to prevent duplicates
+    for (const colId of Object.keys(nextCards)) {
+      nextCards[colId] = nextCards[colId].filter((c) => c.id !== card.id);
+    }
+    
+    // Add to new column
+    const toCol = [...(nextCards[card.columnId] || []), card];
     toCol.sort((a, b) => a.position - b.position);
-    set({
-      cards: {
-        ...current,
-        [fromColumnId]: fromCol,
-        [card.columnId]: toCol,
-      },
-    });
+    
+    nextCards[card.columnId] = toCol;
+    
+    set({ cards: nextCards });
   },
 }));

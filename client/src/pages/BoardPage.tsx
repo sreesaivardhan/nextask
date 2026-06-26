@@ -11,6 +11,20 @@ import { CardModal } from '../components/CardModal';
 import { useBoardMemberStore } from '../stores/boardMemberStore';
 import { socketService } from '../services/socketService';
 import { useSessionStore } from '../stores/sessionStore';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  defaultDropAnimationSideEffects,
+} from '@dnd-kit/core';
+import type { DragStartEvent, DragOverEvent, DragEndEvent } from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { BoardColumn } from '../components/BoardColumn';
+import { CardItem } from '../components/CardItem';
 
 export function BoardPage(): React.ReactElement {
   const { boardId } = useParams<{ boardId: string }>();
@@ -32,6 +46,9 @@ export function BoardPage(): React.ReactElement {
 
   const [newCardTitle, setNewCardTitle] = useState<{ [columnId: string]: string }>({});
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+
+  // Drag and drop state
+  const [activeCard, setActiveCard] = useState<Card | null>(null);
 
   // Typing indicators: map of cardId → displayName
   const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
@@ -111,25 +128,13 @@ export function BoardPage(): React.ReactElement {
     };
     const onCardUpdated = (card: Card) => {
       socketUpdateCard(card);
-      // If this card is currently open in the modal, refresh it
-      setSelectedCard((prev) => (prev && prev.id === card.id ? card : prev));
     };
     const onCardDeleted = ({ cardId, columnId }: { cardId: string; columnId: string }) => {
       socketRemoveCard(cardId, columnId);
       setSelectedCard((prev) => (prev && prev.id === cardId ? null : prev));
     };
-    const onCardMoved = (card: Card & { _prevColumnId?: string }) => {
-      // Server broadcasts the full updated card; we need to know the old columnId
-      // We find it in current state by searching all columns
-      const currentCards = useCardStore.getState().cards;
-      let fromColumnId = card.columnId; // fallback
-      for (const [colId, colCards] of Object.entries(currentCards)) {
-        if (colId !== card.columnId && colCards.some((c) => c.id === card.id)) {
-          fromColumnId = colId;
-          break;
-        }
-      }
-      socketMoveCard(card, fromColumnId);
+    const onCardMoved = (card: Card) => {
+      socketMoveCard(card);
     };
 
     // ── Comment events ──────────────────────────────────────────────────────
@@ -314,6 +319,153 @@ export function BoardPage(): React.ReactElement {
     }, 200);
   };
 
+  // ── Drag and Drop handlers ────────────────────────────────────────────────
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const { data } = active;
+    if (data.current?.type === 'Card') {
+      setActiveCard(data.current.card as Card);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    const isActiveCard = active.data.current?.type === 'Card';
+    const isOverCard = over.data.current?.type === 'Card';
+    const isOverColumn = over.data.current?.type === 'Column';
+
+    if (!isActiveCard) return;
+
+    const currentCards = useCardStore.getState().cards;
+    let activeColumnId: string | null = null;
+    for (const [colId, colCards] of Object.entries(currentCards)) {
+      if (colCards.some(c => c.id === activeId)) {
+        activeColumnId = colId;
+        break;
+      }
+    }
+
+    const overColumnId = isOverCard ? over.data.current?.card.columnId : isOverColumn ? overId : null;
+
+    if (!activeColumnId || !overColumnId) {
+      return;
+    }
+
+    // Optimistically move card to new column during drag
+    useCardStore.setState((state) => {
+      // Find the card inside the latest state to be absolutely safe
+      let currentActiveColId: string | null = null;
+      let activeIndex = -1;
+      let movedCard: Card | null = null;
+      
+      for (const [colId, colCards] of Object.entries(state.cards)) {
+        const idx = colCards.findIndex(c => c.id === activeId);
+        if (idx !== -1) {
+          currentActiveColId = colId;
+          activeIndex = idx;
+          movedCard = colCards[idx];
+          break;
+        }
+      }
+
+      if (!currentActiveColId || !movedCard || activeIndex === -1) {
+        return state;
+      }
+
+      const overItems = state.cards[overColumnId] || [];
+      const overIndex = isOverCard ? overItems.findIndex((c) => c.id === overId) : overItems.length;
+
+      const nextCards = { ...state.cards };
+      
+      // Remove from all columns to be absolutely safe against duplicates
+      for (const colId of Object.keys(nextCards)) {
+        nextCards[colId] = nextCards[colId].filter(c => c.id !== activeId);
+      }
+
+      const cardToInsert = { ...movedCard, columnId: overColumnId };
+      const nextOverItems = [...(nextCards[overColumnId] || [])];
+      
+      nextOverItems.splice(overIndex >= 0 ? overIndex : nextOverItems.length, 0, cardToInsert);
+      nextCards[overColumnId] = nextOverItems;
+
+      return { cards: nextCards };
+    });
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveCard(null);
+    const { active, over } = event;
+    if (!over || !boardId) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    const isOverColumn = over.data.current?.type === 'Column';
+    
+    // Original card details from the drag start
+    const originalCard = active.data.current?.card as Card;
+    if (!originalCard) return;
+
+    const activeColumnId = originalCard.columnId;
+    const overColumnId = isOverColumn ? overId : (over.data.current?.card as Card).columnId;
+
+    if (!activeColumnId || !overColumnId) return;
+
+    const currentCards = useCardStore.getState().cards;
+    const targetColumnCards = currentCards[overColumnId] || [];
+    
+    const currentIndex = targetColumnCards.findIndex(c => c.id === activeId);
+    if (currentIndex === -1) return; 
+
+    // If dropped at exact original position, do nothing
+    if (activeColumnId === overColumnId && currentIndex === targetColumnCards.findIndex(c => c.id === originalCard.id) && originalCard.position !== 65535) {
+       // Actually originalCard is the exact card, we can just check if position changed. 
+       // We'll calculate it first and skip API if it matches.
+    }
+
+    const itemAbove = currentIndex > 0 ? targetColumnCards[currentIndex - 1] : null;
+    const itemBelow = currentIndex < targetColumnCards.length - 1 ? targetColumnCards[currentIndex + 1] : null;
+
+    let newPosition = 65535;
+    if (!itemAbove && itemBelow) {
+      newPosition = itemBelow.position - 65535;
+    } else if (itemAbove && !itemBelow) {
+      newPosition = itemAbove.position + 65535;
+    } else if (itemAbove && itemBelow) {
+      newPosition = (itemAbove.position + itemBelow.position) / 2;
+    } else {
+      newPosition = 65535;
+    }
+
+    if (newPosition === originalCard.position && activeColumnId === overColumnId) {
+      return; // Truly no movement occurred
+    }
+
+    try {
+      const { moveCard } = useCardStore.getState();
+      await moveCard(originalCard.id, originalCard.version, activeColumnId, overColumnId, newPosition);
+    } catch (err) {
+      if (err instanceof Error) addToast(err.message, 'error');
+    }
+  };
+
   if (!board && !isLoading) {
     return <div className="p-6">Loading board...</div>;
   }
@@ -327,105 +479,71 @@ export function BoardPage(): React.ReactElement {
         <h1 className="text-2xl font-bold text-gray-800 truncate flex-1" title={board?.name}>{board?.name}</h1>
       </div>
 
-      <div className="flex-1 overflow-x-auto p-6 flex gap-6 items-start bg-gray-50 min-h-0">
-        {columns.map((column, index) => (
-          <div key={column.id} className="bg-gray-100 rounded w-80 flex-shrink-0 flex flex-col max-h-full">
-            <div className="p-3 bg-gray-200 border-b border-gray-300 rounded-t flex justify-between items-center group">
-              {editingColumnId === column.id ? (
-                <div className="flex gap-2 w-full">
-                  <input
-                    type="text"
-                    value={editingColumnName}
-                    onChange={(e) => setEditingColumnName(e.target.value)}
-                    className="flex-1 border p-1 rounded text-sm min-w-0"
-                    autoFocus
-                    maxLength={100}
-                  />
-                  <button onClick={() => handleRenameColumn(column.id)} className="text-green-600 text-sm font-medium">
-                    Save
-                  </button>
-                  <button onClick={() => setEditingColumnId(null)} className="text-gray-500 text-sm font-medium">
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <h3 className="font-bold text-gray-700 truncate flex-1 mr-2" title={column.name}>{column.name}</h3>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    <button onClick={() => handleMoveLeft(index)} disabled={index === 0} className="text-gray-500 hover:text-blue-600 disabled:opacity-30" title="Move Left">&larr;</button>
-                    <button onClick={() => handleMoveRight(index)} disabled={index === columns.length - 1} className="text-gray-500 hover:text-blue-600 disabled:opacity-30" title="Move Right">&rarr;</button>
-                    <button onClick={() => { setEditingColumnId(column.id); setEditingColumnName(column.name); }} className="text-gray-500 hover:text-blue-600 text-sm" title="Rename">✎</button>
-                    <button onClick={() => handleDeleteColumn(column.id, column.name)} className="text-red-400 hover:text-red-600 text-sm" title="Delete">✕</button>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="p-3 flex-1 overflow-y-auto flex flex-col gap-2">
-              {(cards[column.id] || []).map((card) => (
-                <div
-                  key={card.id}
-                  className="bg-white p-3 rounded shadow-sm border border-gray-200 cursor-pointer hover:border-blue-300 hover:shadow transition-all group"
-                  onClick={() => setSelectedCard(card)}
-                >
-                  <div className="flex justify-between items-start mb-2 overflow-hidden">
-                    <h4 className="font-semibold text-gray-800 text-sm truncate flex-1 mr-2" title={card.title}>{card.title}</h4>
-                    {card.complexity && (
-                      <span className="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
-                        {card.complexity}
-                      </span>
-                    )}
-                  </div>
-
-                  {card.description && (
-                    <p className="text-xs text-gray-500 line-clamp-2 mb-2">{card.description}</p>
-                  )}
-
-                  {/* Typing indicator */}
-                  {typingUsers[card.id] && (
-                    <p className="text-xs text-blue-500 italic mb-1">{typingUsers[card.id]} is typing...</p>
-                  )}
-
-                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {card.assigneeId
-                        ? ((boardId && boardMemberMap[boardId]?.find((m) => m.userId === card.assigneeId)?.user.displayName) ?? '...')
-                        : 'Unassigned'}
-                    </span>
-                    <span className="text-xs text-gray-400">v{card.version}</span>
-                  </div>
-                </div>
-              ))}
-
-              <form onSubmit={(e) => handleCreateCard(e, column.id)} className="mt-2">
-                <input
-                  type="text"
-                  placeholder="Add a card..."
-                  className="w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  value={newCardTitle[column.id] || ''}
-                  onChange={(e) => handleCardInputChange(column.id, e.target.value)}
-                  maxLength={200}
-                />
-              </form>
-            </div>
-          </div>
-        ))}
-
-        <div className="bg-gray-100 rounded w-80 flex-shrink-0 p-3">
-          <form onSubmit={handleCreateColumn} className="flex gap-2">
-            <input
-              type="text"
-              placeholder="New column name..."
-              className="flex-1 border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              value={newColumnName}
-              onChange={(e) => setNewColumnName(e.target.value)}
-              maxLength={100}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex-1 overflow-x-auto p-6 flex gap-6 items-start bg-gray-50 min-h-0">
+          {columns.map((column, index) => (
+            <BoardColumn
+              key={column.id}
+              columnId={column.id}
+              columnName={column.name}
+              cards={cards[column.id] || []}
+              editingColumnId={editingColumnId}
+              editingColumnName={editingColumnName}
+              setEditingColumnName={setEditingColumnName}
+              handleRenameColumn={handleRenameColumn}
+              setEditingColumnId={setEditingColumnId}
+              handleMoveLeft={() => handleMoveLeft(index)}
+              handleMoveRight={() => handleMoveRight(index)}
+              isFirst={index === 0}
+              isLast={index === columns.length - 1}
+              handleDeleteColumn={() => handleDeleteColumn(column.id, column.name)}
+              setSelectedCard={setSelectedCard}
+              typingUsers={typingUsers}
+              boardMemberMap={boardMemberMap}
+              boardId={boardId}
+              newCardTitle={newCardTitle[column.id]}
+              handleCardInputChange={handleCardInputChange}
+              handleCreateCard={handleCreateCard}
             />
-            <button type="submit" className="bg-blue-600 text-white px-3 py-2 rounded font-medium hover:bg-blue-700 text-sm">
-              Add
-            </button>
-          </form>
+          ))}
+
+          <div className="bg-gray-100 rounded w-80 flex-shrink-0 p-3">
+            <form onSubmit={handleCreateColumn} className="flex gap-2">
+              <input
+                type="text"
+                placeholder="New column name..."
+                className="flex-1 border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                maxLength={100}
+              />
+              <button type="submit" className="bg-blue-600 text-white px-3 py-2 rounded font-medium hover:bg-blue-700 text-sm">
+                Add
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+        
+        <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
+          {activeCard ? (
+            <CardItem
+              card={activeCard}
+              isOverlay
+              assigneeName={
+                activeCard.assigneeId && boardId
+                  ? boardMemberMap[boardId]?.find((m) => m.userId === activeCard.assigneeId)?.user.displayName
+                  : undefined
+              }
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
       <ConfirmDialog
         isOpen={columnToDelete !== null}
         title="Delete Column"

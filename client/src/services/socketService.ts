@@ -55,6 +55,8 @@ class SocketService {
       this.joinedBoards.clear();
     });
 
+
+
     this.socket.on('connect_error', (err) => {
       console.warn('[Socket] Connection error:', err.message);
     });

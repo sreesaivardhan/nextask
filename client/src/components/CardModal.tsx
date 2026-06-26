@@ -39,12 +39,15 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
   const [newComment, setNewComment] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [snapshotCard, setSnapshotCard] = useState<Card | null>(null);
+
   useEffect(() => {
     if (isOpen && card) {
       fetchComments(card.id, card.boardId);
       fetchActivity(card.id, card.boardId);
       fetchMembers(card.boardId);
       /* eslint-disable react-hooks/set-state-in-effect */
+      setSnapshotCard(card);
       setEditTitle(card.title);
       setEditDesc(card.description || '');
       setEditComplexity(card.complexity || '');
@@ -58,10 +61,10 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, card?.id]);
 
-  if (!isOpen || !card) return null;
+  if (!isOpen || !snapshotCard) return null;
 
-  const cardComments = comments[card.id] || [];
-  const cardHistory = activities[card.id] || [];
+  const cardComments = comments[snapshotCard.id] || [];
+  const cardHistory = activities[snapshotCard.id] || [];
 
   const handleSave = async () => {
     const trimmedTitle = editTitle.trim();
@@ -82,15 +85,16 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
     const complexityVal = editComplexity === '' ? null : Number(editComplexity);
     
     try {
-      await updateCard(card.id, card.columnId, card.version, {
+      const updated = await updateCard(snapshotCard.id, snapshotCard.columnId, snapshotCard.version, {
         title: trimmedTitle,
         description: trimmedDesc || null,
         complexity: complexityVal,
         assigneeId: editAssignee || null,
       });
+      setSnapshotCard(updated);
       setIsEditing(false);
       addToast('Card updated', 'success');
-      fetchActivity(card.id, card.boardId);
+      fetchActivity(snapshotCard.id, snapshotCard.boardId);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } }; message: string };
       addToast(error.response?.data?.error || error.message, 'error');
@@ -99,7 +103,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
 
   const handleDelete = async () => {
     try {
-      await deleteCard(card.id, card.columnId);
+      await deleteCard(snapshotCard.id, snapshotCard.columnId);
       addToast('Card deleted', 'success');
       onClose();
     } catch (err: unknown) {
@@ -117,9 +121,9 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
       return;
     }
     try {
-      await createComment(card.id, card.boardId, trimmedComment);
+      await createComment(snapshotCard.id, snapshotCard.boardId, trimmedComment);
       setNewComment('');
-      fetchActivity(card.id, card.boardId);
+      fetchActivity(snapshotCard.id, snapshotCard.boardId);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } }; message: string };
       addToast(error.response?.data?.error || error.message, 'error');
@@ -134,7 +138,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
           <div className="px-6 py-4 border-b flex justify-between items-start bg-gray-50">
             <div className="flex-1 min-w-0 pr-4">
               {!isEditing ? (
-                <h2 className="text-xl font-bold text-gray-800 break-words whitespace-normal">{card.title}</h2>
+                <h2 className="text-xl font-bold text-gray-800 break-words whitespace-normal">{snapshotCard.title}</h2>
               ) : (
                 <input
                   type="text"
@@ -143,17 +147,17 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                   onChange={(e) => {
                     setEditTitle(e.target.value);
                     // Debounced typing indicator
-                    if (boardId && card && user) {
+                    if (boardId && snapshotCard && user) {
                       if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
                       typingDebounceRef.current = setTimeout(() => {
-                        socketService.emitTyping(boardId, card.id, user.displayName);
+                        socketService.emitTyping(boardId, snapshotCard.id, user.displayName);
                       }, 200);
                     }
                   }}
                   maxLength={200}
                 />
               )}
-              <div className="text-xs text-gray-400 mt-2">v{card.version} • Created {new Date(card.createdAt).toLocaleString()}</div>
+              <div className="text-xs text-gray-400 mt-2">v{snapshotCard.version} • Created {new Date(snapshotCard.createdAt).toLocaleString()}</div>
             </div>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl leading-none shrink-0">&times;</button>
           </div>
@@ -190,20 +194,20 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                       <div>
                         <span className="text-gray-500 block mb-1">Assignee</span>
                         <span className="font-medium text-gray-800">
-                          {card.assigneeId
-                            ? (boardMembers.find((m) => m.userId === card.assigneeId)?.user.displayName ?? card.assigneeId)
+                          {snapshotCard.assigneeId
+                            ? (boardMembers.find((m) => m.userId === snapshotCard.assigneeId)?.user.displayName ?? snapshotCard.assigneeId)
                             : 'Unassigned'}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-500 block mb-1">Complexity</span>
-                        <span className="font-medium text-gray-800">{card.complexity || 'Unestimated'}</span>
+                        <span className="font-medium text-gray-800">{snapshotCard.complexity || 'Unestimated'}</span>
                       </div>
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-700 mb-2">Description</h3>
-                      {card.description ? (
-                        <p className="whitespace-pre-wrap text-gray-600 text-sm">{card.description}</p>
+                      {snapshotCard.description ? (
+                        <p className="whitespace-pre-wrap text-gray-600 text-sm">{snapshotCard.description}</p>
                       ) : (
                         <p className="text-gray-400 italic text-sm">No description provided.</p>
                       )}
@@ -268,7 +272,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         </div>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.body}</p>
                         <button 
-                          onClick={() => deleteComment(comment.id, card.id, card.boardId)}
+                          onClick={() => deleteComment(comment.id, snapshotCard.id, snapshotCard.boardId)}
                           className="text-xs text-red-500 hover:text-red-700 mt-2"
                         >
                           Delete
@@ -382,10 +386,10 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                     <>
                       <button onClick={() => {
                         setIsEditing(false);
-                        setEditTitle(card.title);
-                        setEditDesc(card.description || '');
-                        setEditComplexity(card.complexity || '');
-                        setEditAssignee(card.assigneeId || '');
+                        setEditTitle(snapshotCard.title);
+                        setEditDesc(snapshotCard.description || '');
+                        setEditComplexity(snapshotCard.complexity || '');
+                        setEditAssignee(snapshotCard.assigneeId || '');
                       }} className="text-gray-600 hover:text-gray-800 px-4 py-2 text-sm font-medium">
                         Cancel
                       </button>
@@ -410,7 +414,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         title="Delete Card"
-        message={`Are you sure you want to delete the card "${card.title}"?`}
+        message={`Are you sure you want to delete the card "${snapshotCard.title}"?`}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
         confirmText="Delete"
