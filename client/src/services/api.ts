@@ -1,3 +1,5 @@
+import { socketService } from './socketService';
+
 const API_URL = '/api';
 
 export const api = {
@@ -15,8 +17,15 @@ export const api = {
 };
 
 async function request(endpoint: string, options: RequestInit) {
-  const headers = { 'Content-Type': 'application/json', ...options.headers };
-  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  // Include the socket ID so the server can exclude the sender from broadcasts,
+  // preventing the creator from receiving duplicate socket events for their own actions.
+  const socketId = socketService.getSocket()?.id ?? '';
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Socket-Id': socketId,
+    ...options.headers,
+  };
+  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers, credentials: 'include' });
 
   if (!response.ok) {
     let errorMsg = 'An error occurred';

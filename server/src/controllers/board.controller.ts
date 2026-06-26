@@ -1,5 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { boardService } from '../services/board.service';
+import { getIO } from '../socket/index';
+
+/** Extract the X-Socket-Id header sent by the client to exclude the sender from broadcasts. */
+function senderSocketId(req: Request): string | undefined {
+  const id = req.headers['x-socket-id'];
+  return typeof id === 'string' && id.length > 0 ? id : undefined;
+}
 
 export class BoardController {
   async getBoards(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -37,6 +44,13 @@ export class BoardController {
       const { name } = req.body;
       const board = await boardService.createBoard(userId, name || '');
       res.status(201).json(board);
+      // Broadcast to the user's personal room so all their tabs (dashboard, etc.)
+      // receive the new board without refresh. Exclude the sender tab.
+      const socketId = senderSocketId(req);
+      const emitter = socketId
+        ? getIO().to(`user:${userId}`).except(socketId)
+        : getIO().to(`user:${userId}`);
+      emitter.emit('board:created', board);
     } catch (error) {
       if (error instanceof Error && error.message === 'Invalid board name') {
         res.status(400).json({ error: error.message });
@@ -53,6 +67,14 @@ export class BoardController {
       const { name } = req.body;
       const board = await boardService.updateBoard(boardId, userId, name || '');
       res.status(200).json(board);
+      // Broadcast to board room (members viewing the board) AND user room (dashboard).
+      const socketId = senderSocketId(req);
+      const io = getIO();
+      const rooms = [boardId, `user:${userId}`];
+      rooms.forEach((room) => {
+        const emitter = socketId ? io.to(room).except(socketId) : io.to(room);
+        emitter.emit('board:updated', board);
+      });
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized access to board') {
         res.status(403).json({ error: error.message });
@@ -72,6 +94,13 @@ export class BoardController {
       const { boardId } = req.params;
       await boardService.deleteBoard(boardId, userId);
       res.status(204).send();
+      const socketId = senderSocketId(req);
+      const io = getIO();
+      const rooms = [boardId, `user:${userId}`];
+      rooms.forEach((room) => {
+        const emitter = socketId ? io.to(room).except(socketId) : io.to(room);
+        emitter.emit('board:deleted', { boardId });
+      });
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized access to board') {
         res.status(403).json({ error: error.message });

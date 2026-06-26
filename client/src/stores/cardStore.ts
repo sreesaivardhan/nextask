@@ -40,6 +40,11 @@ interface CardStore {
     toColumnId: string,
     newPosition: number
   ) => Promise<Card>;
+  // Socket-driven mutations (update Zustand directly without refetching)
+  socketAddCard: (card: Card) => void;
+  socketUpdateCard: (card: Card) => void;
+  socketRemoveCard: (cardId: string, columnId: string) => void;
+  socketMoveCard: (card: Card, fromColumnId: string) => void;
 }
 
 export const useCardStore = create<CardStore>((set, get) => ({
@@ -141,5 +146,63 @@ export const useCardStore = create<CardStore>((set, get) => ({
       set({ cards: currentCards });
       throw err;
     }
+  },
+
+  // ── Socket-driven mutations ──────────────────────────────────────────────────
+  socketAddCard: (card) => {
+    const current = get().cards;
+    const colCards = current[card.columnId] || [];
+    // Avoid duplicates (our own REST response already added it)
+    if (colCards.some((c) => c.id === card.id)) return;
+    set({
+      cards: {
+        ...current,
+        [card.columnId]: [...colCards, card].sort((a, b) => a.position - b.position),
+      },
+    });
+  },
+  socketUpdateCard: (card) => {
+    const current = get().cards;
+    // The card might be in a different column if it was moved; find it across all columns
+    const updatedCards: Record<string, Card[]> = {};
+    let found = false;
+    for (const colId of Object.keys(current)) {
+      updatedCards[colId] = current[colId].map((c) => {
+        if (c.id === card.id) {
+          found = true;
+          return card;
+        }
+        return c;
+      });
+    }
+    if (found) {
+      set({ cards: updatedCards });
+    }
+  },
+  socketRemoveCard: (cardId, columnId) => {
+    const current = get().cards;
+    if (!current[columnId]) return;
+    set({
+      cards: {
+        ...current,
+        [columnId]: current[columnId].filter((c) => c.id !== cardId),
+      },
+    });
+  },
+  socketMoveCard: (card, fromColumnId) => {
+    const current = get().cards;
+    // Remove from old column
+    const fromCol = (current[fromColumnId] || []).filter((c) => c.id !== card.id);
+    // Add to new column (avoid duplicates)
+    const toCol = (current[card.columnId] || []).filter((c) => c.id !== card.id);
+    toCol.push(card);
+    toCol.sort((a, b) => a.position - b.position);
+    set({
+      cards: {
+        ...current,
+        [fromColumnId]: fromCol,
+        [card.columnId]: toCol,
+      },
+    });
   },
 }));

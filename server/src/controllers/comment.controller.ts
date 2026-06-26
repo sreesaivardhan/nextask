@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { commentService } from '../services/comment.service';
+import { getIO } from '../socket/index';
+
+function senderSocketId(req: Request): string | undefined {
+  const id = req.headers['x-socket-id'];
+  return typeof id === 'string' && id.length > 0 ? id : undefined;
+}
 
 export class CommentController {
   async getComments(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -37,6 +43,9 @@ export class CommentController {
 
       const comment = await commentService.createComment(cardId, boardId, userId, body);
       res.status(201).json(comment);
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(boardId as string).except(socketId) : getIO().to(boardId as string);
+      emitter.emit('comment:created', comment);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'Unauthorized access to board') {
@@ -65,6 +74,9 @@ export class CommentController {
 
       await commentService.deleteComment(commentId, cardId, boardId, userId);
       res.status(204).send();
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(boardId as string).except(socketId) : getIO().to(boardId as string);
+      emitter.emit('comment:deleted', { commentId, cardId });
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'Unauthorized access to board') {

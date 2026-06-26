@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { cardService } from '../services/card.service';
+import { getIO } from '../socket/index';
+
+function senderSocketId(req: Request): string | undefined {
+  const id = req.headers['x-socket-id'];
+  return typeof id === 'string' && id.length > 0 ? id : undefined;
+}
 
 export class CardController {
   async getCards(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -28,6 +34,9 @@ export class CardController {
         assigneeId,
       });
       res.status(201).json(card);
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(boardId as string).except(socketId) : getIO().to(boardId as string);
+      emitter.emit('card:created', card);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'Unauthorized access to board') {
@@ -65,6 +74,9 @@ export class CardController {
         assigneeId,
       });
       res.status(200).json(card);
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(card.boardId).except(socketId) : getIO().to(card.boardId);
+      emitter.emit('card:updated', card);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'Unauthorized access to board') {
@@ -101,6 +113,9 @@ export class CardController {
 
       const card = await cardService.moveCard(id, userId, version, { columnId, position });
       res.status(200).json(card);
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(card.boardId).except(socketId) : getIO().to(card.boardId);
+      emitter.emit('card:moved', card);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'Unauthorized access to board') {
@@ -124,8 +139,17 @@ export class CardController {
     try {
       const userId = req.user!.id;
       const { id } = req.params;
+      // Fetch card before deletion to get boardId/columnId for the broadcast
+      const card = await cardService.findCardById(id);
+      const boardId = card?.boardId;
+      const columnId = card?.columnId;
       await cardService.deleteCard(id, userId);
       res.status(204).send();
+      if (boardId) {
+        const socketId = senderSocketId(req);
+        const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);
+        emitter.emit('card:deleted', { cardId: id, columnId });
+      }
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'Unauthorized access to board') {

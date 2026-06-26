@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../services/api';
+import { socketService } from '../services/socketService';
 
 export interface User {
   id: string;
@@ -23,6 +24,10 @@ export const useSessionStore = create<SessionStore>((set) => ({
     try {
       const user = await api.get('/session');
       set({ user, isLoading: false });
+      if (user) {
+        // Connect singleton socket once session is confirmed
+        socketService.connect();
+      }
     } catch {
       set({ user: null, isLoading: false });
     }
@@ -30,9 +35,13 @@ export const useSessionStore = create<SessionStore>((set) => ({
   createSession: async (displayName) => {
     const user = await api.post('/session', { displayName });
     set({ user });
+    // Connect socket after login
+    socketService.connect();
   },
   deleteSession: async () => {
     await api.delete('/session');
     set({ user: null });
+    // Disconnect socket on logout
+    socketService.disconnect();
   },
 }));

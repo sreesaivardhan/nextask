@@ -3,10 +3,14 @@ import { useBoardStore } from '../stores/boardStore';
 import { useToastStore } from '../stores/toastStore';
 import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { socketService } from '../services/socketService';
+import { useSessionStore } from '../stores/sessionStore';
 
 export function DashboardPage(): React.ReactElement {
-  const { boards, fetchBoards, createBoard, updateBoard, deleteBoard, isLoading } = useBoardStore();
+  const { boards, fetchBoards, createBoard, updateBoard, deleteBoard, isLoading,
+    socketAddBoard, socketUpdateBoard, socketRemoveBoard } = useBoardStore();
   const { addToast } = useToastStore();
+  const { user } = useSessionStore();
   const [isCreating, setIsCreating] = useState(false);
   const [newBoardName, setNewBoardName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -16,6 +20,35 @@ export function DashboardPage(): React.ReactElement {
   useEffect(() => {
     fetchBoards();
   }, [fetchBoards]);
+
+  // ── Socket listeners for dashboard real-time sync ─────────────────────────
+  // The server emits these to the user:${userId} room which the socket auto-joins
+  // on connection (server reads userId from the session).
+  useEffect(() => {
+    if (!user) return;
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    const onBoardCreated = (board: Parameters<typeof socketAddBoard>[0]) => {
+      socketAddBoard(board);
+    };
+    const onBoardUpdated = (board: Parameters<typeof socketUpdateBoard>[0]) => {
+      socketUpdateBoard(board);
+    };
+    const onBoardDeleted = ({ boardId }: { boardId: string }) => {
+      socketRemoveBoard(boardId);
+    };
+
+    socket.on('board:created', onBoardCreated);
+    socket.on('board:updated', onBoardUpdated);
+    socket.on('board:deleted', onBoardDeleted);
+
+    return () => {
+      socket.off('board:created', onBoardCreated);
+      socket.off('board:updated', onBoardUpdated);
+      socket.off('board:deleted', onBoardDeleted);
+    };
+  }, [user, socketAddBoard, socketUpdateBoard, socketRemoveBoard]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

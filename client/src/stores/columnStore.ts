@@ -16,6 +16,11 @@ interface ColumnStore {
   updateColumn: (boardId: string, columnId: string, name: string) => Promise<Column>;
   deleteColumn: (boardId: string, columnId: string) => Promise<void>;
   reorderColumn: (boardId: string, columnId: string, newPosition: number) => Promise<Column>;
+  // Socket-driven mutations
+  socketAddColumn: (column: Column) => void;
+  socketUpdateColumn: (column: Column) => void;
+  socketRemoveColumn: (columnId: string) => void;
+  socketMoveColumn: (column: Column) => void;
 }
 
 export const useColumnStore = create<ColumnStore>((set, get) => ({
@@ -65,5 +70,23 @@ export const useColumnStore = create<ColumnStore>((set, get) => ({
       set({ columns: prevColumns });
       throw e;
     }
+  },
+  socketAddColumn: (column) => {
+    const exists = get().columns.some((c) => c.id === column.id);
+    if (exists) return;
+    set({ columns: [...get().columns, column].sort((a, b) => a.position - b.position) });
+  },
+  socketUpdateColumn: (column) => {
+    set({ columns: get().columns.map((c) => (c.id === column.id ? column : c)) });
+  },
+  socketRemoveColumn: (columnId) => {
+    set({ columns: get().columns.filter((c) => c.id !== columnId) });
+  },
+  socketMoveColumn: (column) => {
+    set({
+      columns: get().columns
+        .map((c) => (c.id === column.id ? column : c))
+        .sort((a, b) => a.position - b.position),
+    });
   },
 }));

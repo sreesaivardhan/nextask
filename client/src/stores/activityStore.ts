@@ -18,6 +18,8 @@ interface ActivityStore {
   activities: Record<string, ActivityLog[]>; // Keyed by entityId (cardId)
   isLoading: boolean;
   fetchActivity: (cardId: string, boardId: string) => Promise<void>;
+  // Socket-driven mutations
+  socketAddActivity: (log: ActivityLog) => void;
 }
 
 export const useActivityStore = create<ActivityStore>((set, get) => ({
@@ -34,5 +36,15 @@ export const useActivityStore = create<ActivityStore>((set, get) => ({
     } catch {
       set({ isLoading: false });
     }
+  },
+  socketAddActivity: (log) => {
+    const cardId = log.entityId;
+    const current = get().activities[cardId] || [];
+    // Avoid duplicates
+    if (current.some((a) => a.id === log.id)) return;
+    // History is shown newest-first (matching API order)
+    set({
+      activities: { ...get().activities, [cardId]: [log, ...current] },
+    });
   },
 }));

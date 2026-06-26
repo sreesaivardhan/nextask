@@ -14,6 +14,10 @@ interface BoardStore {
   createBoard: (name: string) => Promise<Board>;
   updateBoard: (id: string, name: string) => Promise<Board>;
   deleteBoard: (id: string) => Promise<void>;
+  // Socket-driven mutations (called by socket listeners, not REST)
+  socketAddBoard: (board: Board) => void;
+  socketUpdateBoard: (board: Board) => void;
+  socketRemoveBoard: (boardId: string) => void;
 }
 
 export const useBoardStore = create<BoardStore>((set, get) => ({
@@ -41,5 +45,14 @@ export const useBoardStore = create<BoardStore>((set, get) => ({
   deleteBoard: async (id) => {
     await api.delete(`/boards/${id}`);
     set({ boards: get().boards.filter((b) => b.id !== id) });
+  },
+  socketAddBoard: (board) => {
+    set({ boards: [board, ...get().boards] });
+  },
+  socketUpdateBoard: (board) => {
+    set({ boards: get().boards.map((b) => (b.id === board.id ? board : b)) });
+  },
+  socketRemoveBoard: (boardId) => {
+    set({ boards: get().boards.filter((b) => b.id !== boardId) });
   },
 }));

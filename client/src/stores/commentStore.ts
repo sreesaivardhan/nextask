@@ -16,6 +16,9 @@ interface CommentStore {
   fetchComments: (cardId: string, boardId: string) => Promise<void>;
   createComment: (cardId: string, boardId: string, body: string) => Promise<Comment>;
   deleteComment: (commentId: string, cardId: string, boardId: string) => Promise<void>;
+  // Socket-driven mutations
+  socketAddComment: (comment: Comment) => void;
+  socketRemoveComment: (commentId: string, cardId: string) => void;
 }
 
 export const useCommentStore = create<CommentStore>((set, get) => ({
@@ -43,6 +46,20 @@ export const useCommentStore = create<CommentStore>((set, get) => ({
   },
   deleteComment: async (commentId, cardId, boardId) => {
     await api.delete(`/comments/${commentId}?cardId=${cardId}&boardId=${boardId}`);
+    const current = get().comments[cardId] || [];
+    set({
+      comments: { ...get().comments, [cardId]: current.filter((c) => c.id !== commentId) },
+    });
+  },
+  socketAddComment: (comment) => {
+    const current = get().comments[comment.cardId] || [];
+    // Avoid duplicates (our own REST response already added it)
+    if (current.some((c) => c.id === comment.id)) return;
+    set({
+      comments: { ...get().comments, [comment.cardId]: [...current, comment] },
+    });
+  },
+  socketRemoveComment: (commentId, cardId) => {
     const current = get().comments[cardId] || [];
     set({
       comments: { ...get().comments, [cardId]: current.filter((c) => c.id !== commentId) },

@@ -15,5 +15,5 @@ export const env = {
   port: parseInt(process.env['PORT'] ?? '3001', 10),
   databaseUrl: requireEnv('DATABASE_URL'),
   sessionSecret: requireEnv('SESSION_SECRET'),
-  clientUrl: process.env['CLIENT_URL'] ?? 'http://localhost:5173',
+  clientUrls: (process.env['CLIENT_URL'] ?? 'http://localhost:5173,http://localhost:4173').split(','),
 } as const;

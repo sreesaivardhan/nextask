@@ -20,6 +20,9 @@ export class ActivityLogRepository {
         entityId: data.entityId,
         metadata: data.metadata || {},
       },
+      include: {
+        user: { select: { id: true, displayName: true } },
+      },
     });
   }
 

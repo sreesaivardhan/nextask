@@ -1,24 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { type Card, useCardStore } from '../stores/cardStore';
 import { useCommentStore } from '../stores/commentStore';
 import { useActivityStore } from '../stores/activityStore';
 import { useToastStore } from '../stores/toastStore';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useBoardMemberStore } from '../stores/boardMemberStore';
+import { socketService } from '../services/socketService';
+import { useSessionStore } from '../stores/sessionStore';
 
 interface CardModalProps {
   card: Card | null;
   isOpen: boolean;
   onClose: () => void;
+  boardId?: string;
   boardComplexityMax?: number;
 }
 
-export function CardModal({ card, isOpen, onClose, boardComplexityMax = 5 }: CardModalProps): React.ReactElement | null {
+export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax = 5 }: CardModalProps): React.ReactElement | null {
   const { updateCard, deleteCard } = useCardStore();
   const { comments, fetchComments, createComment, deleteComment } = useCommentStore();
   const { activities, fetchActivity } = useActivityStore();
   const { addToast } = useToastStore();
   const { members, fetchMembers } = useBoardMemberStore();
+  const { user } = useSessionStore();
+
+  const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const boardMembers = card ? (members[card.boardId] || []) : [];
 
@@ -134,7 +140,16 @@ export function CardModal({ card, isOpen, onClose, boardComplexityMax = 5 }: Car
                   type="text"
                   className="w-full border p-2 rounded text-xl font-bold"
                   value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
+                  onChange={(e) => {
+                    setEditTitle(e.target.value);
+                    // Debounced typing indicator
+                    if (boardId && card && user) {
+                      if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
+                      typingDebounceRef.current = setTimeout(() => {
+                        socketService.emitTyping(boardId, card.id, user.displayName);
+                      }, 200);
+                    }
+                  }}
                   maxLength={200}
                 />
               )}

@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { columnService } from '../services/column.service';
+import { getIO } from '../socket/index';
+
+function senderSocketId(req: Request): string | undefined {
+  const id = req.headers['x-socket-id'];
+  return typeof id === 'string' && id.length > 0 ? id : undefined;
+}
 
 export class ColumnController {
   async getColumns(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -24,6 +30,9 @@ export class ColumnController {
       const { name } = req.body;
       const column = await columnService.createColumn(boardId, userId, name || '');
       res.status(201).json(column);
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);
+      emitter.emit('column:created', column);
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized access to board') {
         res.status(403).json({ error: error.message });
@@ -44,6 +53,9 @@ export class ColumnController {
       const { name } = req.body;
       const column = await columnService.updateColumn(boardId, columnId, userId, name || '');
       res.status(200).json(column);
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);
+      emitter.emit('column:updated', column);
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized access to board') {
         res.status(403).json({ error: error.message });
@@ -67,6 +79,9 @@ export class ColumnController {
       const { boardId, columnId } = req.params;
       await columnService.deleteColumn(boardId, columnId, userId);
       res.status(204).send();
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);
+      emitter.emit('column:deleted', { columnId });
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized access to board') {
         res.status(403).json({ error: error.message });
@@ -93,6 +108,9 @@ export class ColumnController {
 
       const column = await columnService.reorderColumn(boardId, columnId, userId, position);
       res.status(200).json(column);
+      const socketId = senderSocketId(req);
+      const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);
+      emitter.emit('column:moved', column);
     } catch (error) {
       if (error instanceof Error && error.message === 'Unauthorized access to board') {
         res.status(403).json({ error: error.message });

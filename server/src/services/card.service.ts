@@ -222,6 +222,11 @@ export class CardService {
     await cardRepository.delete(cardId);
     await activityLogService.log(card.boardId, userId, 'CARD_DELETED', 'Card', card.id, { title: card.title });
   }
+
+  /** Lightweight helper to fetch boardId/columnId for socket broadcast before deletion. */
+  async findCardById(cardId: string): Promise<Card | null> {
+    return cardRepository.findById(cardId);
+  }
 }
 
 export const cardService = new CardService();
