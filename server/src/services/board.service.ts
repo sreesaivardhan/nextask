@@ -48,6 +48,17 @@ export class BoardService {
 
     await boardRepository.delete(boardId);
   }
+
+  async getAIInsights(boardId: string, userId: string): Promise<import('@prisma/client').AIInsight[]> {
+    // Validate access
+    const hasAccess = await boardRepository.isMember(boardId, userId);
+    if (!hasAccess) {
+      throw new Error('Unauthorized access to board');
+    }
+
+    const insights = await boardRepository.findAIInsights(boardId);
+    return insights;
+  }
 }
 
 export const boardService = new BoardService();

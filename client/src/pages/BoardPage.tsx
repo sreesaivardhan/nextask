@@ -7,7 +7,9 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useCardStore, type Card } from '../stores/cardStore';
 import { useCommentStore } from '../stores/commentStore';
 import { useActivityStore } from '../stores/activityStore';
+import { useInsightStore } from '../stores/insightStore';
 import { CardModal } from '../components/CardModal';
+import { AIInsightsPanel } from '../components/AIInsightsPanel';
 import { useBoardMemberStore } from '../stores/boardMemberStore';
 import { socketService } from '../services/socketService';
 import { useSessionStore } from '../stores/sessionStore';
@@ -36,6 +38,7 @@ export function BoardPage(): React.ReactElement {
     socketAddCard, socketUpdateCard, socketRemoveCard, socketMoveCard } = useCardStore();
   const { socketAddComment, socketRemoveComment } = useCommentStore();
   const { socketAddActivity } = useActivityStore();
+  const { socketAddInsight } = useInsightStore();
   const { members: boardMemberMap, fetchMembers } = useBoardMemberStore();
   const { user } = useSessionStore();
 
@@ -166,6 +169,16 @@ export function BoardPage(): React.ReactElement {
       }, 2000);
     };
 
+    // ── AI events ───────────────────────────────────────────────────────────
+    const onAiInsight = (insight: Parameters<typeof socketAddInsight>[0]) => {
+      console.log('Received ai:insight');
+      console.log('Payload:', insight);
+      console.log('Board ID:', insight.boardId);
+      socketAddInsight(insight);
+    };
+
+    console.log('Component mounted');
+    console.log('Listener registered');
     socket.on('connect', onConnect);
     socket.on('board:updated', onBoardUpdated);
     socket.on('column:created', onColumnCreated);
@@ -180,11 +193,13 @@ export function BoardPage(): React.ReactElement {
     socket.on('comment:deleted', onCommentDeleted);
     socket.on('activity:created', onActivityCreated);
     socket.on('card:typing', onCardTyping);
+    socket.on('ai:insight', onAiInsight);
 
     // Capture ref value for cleanup (ESLint react-hooks/exhaustive-deps)
     const timers = typingTimers.current;
 
     return () => {
+      console.log('Listener removed');
       socketService.leaveBoard(boardId);
       socket.off('connect', onConnect);
       socket.off('board:updated', onBoardUpdated);
@@ -200,13 +215,14 @@ export function BoardPage(): React.ReactElement {
       socket.off('comment:deleted', onCommentDeleted);
       socket.off('activity:created', onActivityCreated);
       socket.off('card:typing', onCardTyping);
+      socket.off('ai:insight', onAiInsight);
       // Clear all typing timers
       Object.values(timers).forEach(clearTimeout);
     };
   }, [boardId, handleReconnect, socketUpdateBoard,
     socketAddColumn, socketUpdateColumn, socketRemoveColumn, socketMoveColumn,
     socketAddCard, socketUpdateCard, socketRemoveCard, socketMoveCard,
-    socketAddComment, socketRemoveComment, socketAddActivity]);
+    socketAddComment, socketRemoveComment, socketAddActivity, socketAddInsight]);
 
   // ── Column handlers ───────────────────────────────────────────────────────
   const handleCreateColumn = async (e: React.FormEvent) => {
@@ -528,6 +544,8 @@ export function BoardPage(): React.ReactElement {
               </button>
             </form>
           </div>
+          
+          {boardId && <AIInsightsPanel boardId={boardId} />}
         </div>
         
         <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>

@@ -109,6 +109,20 @@ export class BoardController {
       next(error);
     }
   }
+  async getAIInsights(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const { boardId } = req.params;
+      const insights = await boardService.getAIInsights(boardId, userId);
+      res.status(200).json(insights);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Unauthorized access to board') {
+        res.status(403).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  }
 }
 
 export const boardController = new BoardController();

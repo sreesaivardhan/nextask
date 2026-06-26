@@ -58,6 +58,13 @@ export class BoardRepository {
     });
     return !!member;
   }
+
+  async findAIInsights(boardId: string): Promise<import('@prisma/client').AIInsight[]> {
+    return prisma.aIInsight.findMany({
+      where: { boardId },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }
 
 export const boardRepository = new BoardRepository();

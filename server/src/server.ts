@@ -33,10 +33,15 @@ app.use(errorHandler);
 // ─── Socket.io ────────────────────────────────────────────────────────────────
 initializeSocket(httpServer);
 
+import { startAIScheduler } from './scheduler';
+
 // ─── Start ────────────────────────────────────────────────────────────────────
 httpServer.listen(env.port, () => {
   console.log(`[Server] NexTask server running on port ${env.port} (${env.nodeEnv})`);
   console.log(`[Server] Health: http://localhost:${env.port}/health`);
+  
+  // Start background tasks
+  startAIScheduler();
 });
 
 export { app };

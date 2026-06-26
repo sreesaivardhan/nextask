@@ -208,9 +208,12 @@ model AIInsight {
   id      String        @id @default(cuid())
   boardId String
   type    AIInsightType
-  payload Json          @default("{}")
+  title   String
+  summary String
+  data    Json          @default("{}")
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
 

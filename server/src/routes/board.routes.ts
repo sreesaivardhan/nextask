@@ -19,3 +19,6 @@ boardRouter.get('/:boardId/members', boardMemberController.getMembers);
 
 // Mount column router under boards
 boardRouter.use('/:boardId/columns', columnRouter);
+
+// AI Insights
+boardRouter.get('/:boardId/ai-insights', boardController.getAIInsights);
