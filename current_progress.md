@@ -12,7 +12,7 @@
 | Board Settings                                             | ✅      |
 | Last-write-wins Conflict Handling                          | ✅      |
 | Conflict Notification                                      | ✅      |
-| **Multi-user Board Collaboration (Invites/Board Members)** | ❌      |
+| Multi-user Board Collaboration (Invites/Board Members)     | ✅      |
 | **Task Complexity Inference**                              | ❌      |
 | **GitHub Issues Import**                                   | ❌      |
 | **Chrome Extension**                                       | ❌      |

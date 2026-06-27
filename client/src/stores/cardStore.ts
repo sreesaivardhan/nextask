@@ -9,6 +9,10 @@ export interface Card {
   description: string | null;
   complexity: number | null;
   assigneeId: string | null;
+  complexityStatus: 'PENDING' | 'ACCEPTED' | 'OVERRIDDEN';
+  suggestedSp: number | null;
+  spConfidence: number | null;
+  spReasons: string[] | null;
   version: number;
   position: number;
   createdAt: string;
@@ -31,7 +35,13 @@ interface CardStore {
     cardId: string,
     columnId: string,
     version: number,
-    updates: { title?: string; description?: string | null; complexity?: number | null; assigneeId?: string | null }
+    updates: { 
+      title?: string; 
+      description?: string | null; 
+      complexity?: number | null; 
+      assigneeId?: string | null;
+      complexityStatus?: 'PENDING' | 'ACCEPTED' | 'OVERRIDDEN';
+    }
   ) => Promise<Card>;
   deleteCard: (cardId: string, columnId: string) => Promise<void>;
   moveCard: (

@@ -60,7 +60,7 @@ export class CardController {
     try {
       const userId = req.user!.id;
       const { id } = req.params;
-      const { version, title, description, complexity, assigneeId } = req.body;
+      const { version, title, description, complexity, assigneeId, complexityStatus } = req.body;
 
       if (version === undefined) {
         res.status(400).json({ error: 'Version is required for updates' });
@@ -72,6 +72,7 @@ export class CardController {
         description,
         complexity,
         assigneeId,
+        complexityStatus,
       });
       res.status(200).json(card);
       const socketId = senderSocketId(req);

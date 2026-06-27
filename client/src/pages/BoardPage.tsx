@@ -51,7 +51,11 @@ export function BoardPage(): React.ReactElement {
   const [columnToDelete, setColumnToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const [newCardTitle, setNewCardTitle] = useState<{ [columnId: string]: string }>({});
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [selectedCardState, setSelectedCard] = useState<Card | null>(null);
+  
+  const selectedCard = selectedCardState ? (
+    Object.values(cards).flat().find(c => c.id === selectedCardState.id) || selectedCardState
+  ) : null;
 
   // Drag and drop state
   const [activeCard, setActiveCard] = useState<Card | null>(null);

@@ -503,3 +503,210 @@ export async function analyzeBoards(): Promise<void> {
   console.log(`[AI] Duration: ${duration}ms`);
   console.log('[AI] Finished');
 }
+
+/**
+ * Event-driven AI complexity inference.
+ * Infers task complexity based on heuristics and historical similar cards.
+ */
+export async function inferCardComplexity(cardId: string): Promise<void> {
+  console.log(`[AI] Starting complexity inference for card: ${cardId}`);
+  
+  try {
+    const card = await prisma.card.findUnique({
+      where: { id: cardId },
+      include: {
+        board: {
+          include: {
+            columns: true
+          }
+        },
+        labels: {
+          include: { label: true }
+        }
+      }
+    });
+
+    if (!card || !card.board) {
+      console.log(`[AI] Card not found or has no board`);
+      return;
+    }
+
+    const title = card.title || '';
+    const description = card.description || '';
+    const fullText = `${title} ${description}`.toLowerCase();
+
+    // 1. Base Description Richness Score
+    let score = 0;
+    const reasons: string[] = [];
+
+    const descLength = description.length;
+    if (descLength > 1000) {
+      score += 4;
+      reasons.push('Detailed description (>1000 chars) indicates complexity');
+    } else if (descLength > 300) {
+      score += 2;
+      reasons.push('Moderate description depth indicates average complexity');
+    }
+
+    const hasAcceptanceCriteria = /acceptance criteria|checklist|- \[ \]|1\.|todo/i.test(description);
+    if (hasAcceptanceCriteria) {
+      score += 2;
+      reasons.push('Structured acceptance criteria detected');
+    }
+
+    // 2. Technical Keyword Heuristics
+    const keywords = [
+      { words: ['auth', 'oauth', 'jwt', 'login', 'passport', 'session'], points: 3, label: 'Authentication work detected' },
+      { words: ['payment', 'stripe', 'checkout', 'billing'], points: 4, label: 'Payment gateway integration detected' },
+      { words: ['database', 'schema', 'migration', 'prisma', 'sql', 'postgres'], points: 3, label: 'Database schema changes required' },
+      { words: ['socket', 'realtime', 'real-time', 'websocket', 'broadcast'], points: 3, label: 'Real-time / Socket communication detected' },
+      { words: ['api', 'rest', 'endpoint', 'fetch', 'axios', 'graphql'], points: 2, label: 'API endpoint implementation required' },
+      { words: ['ai', 'machine learning', 'inference', 'heuristic', 'prompt'], points: 4, label: 'AI/ML related work detected' },
+      { words: ['docker', 'deploy', 'pipeline', 'ci/cd', 'infrastructure', 'railway'], points: 3, label: 'Deployment or Infrastructure work detected' },
+      { words: ['redis', 'queue', 'bull', 'worker', 'background'], points: 3, label: 'Background processing / Queue detected' },
+      { words: ['test', 'jest', 'cypress', 'e2e'], points: 1, label: 'Testing requirements specified' }
+    ];
+
+    let signalsMatched = 0;
+    for (const kw of keywords) {
+      if (kw.words.some(w => fullText.includes(w))) {
+        score += kw.points;
+        reasons.push(kw.label);
+        signalsMatched++;
+      }
+    }
+
+    // 3. Historical Similarity Lookup
+    // Find "Done" columns
+    const completionNames = ['done', 'completed', 'finished', 'resolved', 'closed'];
+    const doneColumnIds = card.board.columns
+      .filter(c => completionNames.includes(c.name.trim().toLowerCase()))
+      .map(c => c.id);
+
+    let historicalMatchPoints = 0;
+    let historicalCount = 0;
+    let avgHistorical = 0;
+    
+    if (doneColumnIds.length > 0) {
+      const completedCards = await prisma.card.findMany({
+        where: {
+          boardId: card.boardId,
+          columnId: { in: doneColumnIds },
+          id: { not: card.id },
+          complexity: { not: null } // must have SP
+        }
+      });
+
+      // Simple Jaccard similarity for words > 4 chars
+      const extractWords = (text: string) => {
+        return new Set(
+          text.toLowerCase().split(/\W+/)
+            .filter(w => w.length > 4 && !['about', 'there', 'which', 'their'].includes(w))
+        );
+      };
+
+      const currentWords = extractWords(fullText);
+
+      for (const compCard of completedCards) {
+        if (!compCard.complexity) continue;
+        const compWords = extractWords(`${compCard.title} ${compCard.description || ''}`);
+        
+        const intersection = new Set([...currentWords].filter(x => compWords.has(x)));
+        const union = new Set([...currentWords, ...compWords]);
+        
+        if (union.size === 0) continue;
+        const similarity = intersection.size / union.size;
+        
+        // If similarity is > 15%, consider it a match
+        if (similarity > 0.15) {
+          historicalMatchPoints += compCard.complexity;
+          historicalCount++;
+        }
+      }
+
+      if (historicalCount > 0) {
+        avgHistorical = Math.round(historicalMatchPoints / historicalCount);
+        signalsMatched += 2; // boosts confidence
+      }
+    }
+
+    // Map score to Fibonacci Story Points [1, 2, 3, 5, 8, 13]
+    let baseSp = 1;
+    if (score >= 18) baseSp = 13;
+    else if (score >= 12) baseSp = 8;
+    else if (score >= 7) baseSp = 5;
+    else if (score >= 4) baseSp = 3;
+    else if (score >= 2) baseSp = 2;
+
+    let suggestedSp = baseSp;
+
+    // Blend historical SP with base SP
+    if (historicalCount > 0) {
+       const blended = (baseSp + avgHistorical) / 2;
+       const fib = [1, 2, 3, 5, 8, 13];
+       suggestedSp = fib.reduce((prev, curr) => 
+         Math.abs(curr - blended) < Math.abs(prev - blended) ? curr : prev
+       );
+       reasons.push(`Found ${historicalCount} similar completed card(s) averaging ${avgHistorical} SP. (Blended base ${baseSp} SP with historical)`);
+    }
+
+    // Calculate Confidence
+    let confidence = 50; // base confidence
+    if (signalsMatched > 0) confidence += signalsMatched * 10;
+    if (descLength > 500) confidence += 10;
+    if (descLength < 50) confidence -= 20; // ambiguous
+    if (signalsMatched === 0 && descLength < 100) confidence = 20;
+    
+    confidence = Math.max(0, Math.min(100, confidence));
+
+    if (reasons.length === 0) {
+      reasons.push('Limited context provided. Assigned base complexity.');
+    }
+
+    // 4. Duplicate Prevention (Do not overwrite if nothing materially changed)
+    const existingSp = card.suggestedSp;
+    const existingConfidence = card.spConfidence;
+    const existingReasons = JSON.stringify(card.spReasons || []);
+    const newReasonsStr = JSON.stringify(reasons);
+
+    if (
+      existingSp === suggestedSp &&
+      existingConfidence === confidence &&
+      existingReasons === newReasonsStr
+    ) {
+      console.log(`[AI] Inference identical to existing prediction. Skipping update.`);
+      return;
+    }
+
+    // Persist
+    const updatedCard = await prisma.card.update({
+      where: { id: cardId },
+      data: {
+        suggestedSp,
+        spConfidence: confidence,
+        spReasons: reasons,
+        // Only update status to PENDING if it wasn't ACCEPTED/OVERRIDDEN, 
+        // OR if the AI recommendation is completely new.
+        // The assignment doesn't explicitly state whether to reset status on re-inference. 
+        // We will reset to PENDING so the user sees there is a new suggestion.
+        complexityStatus: 'PENDING',
+        version: { increment: 1 }
+      },
+      include: {
+        labels: { include: { label: true } },
+        assignee: true,
+        lastEditedBy: true,
+      }
+    });
+
+    console.log(`[AI] Persisted complexity inference for ${cardId}: ${suggestedSp} SP (${confidence}%)`);
+
+    // Emit Socket
+    const io = getIO();
+    if (io) {
+      io.to(card.boardId).emit('card:updated', updatedCard);
+    }
+  } catch (error) {
+    console.error(`[AI] Error inferring card complexity:`, error);
+  }
+}

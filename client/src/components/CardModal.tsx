@@ -43,6 +43,8 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [conflictError, setConflictError] = useState<{ message: string; latestCard: Card | null } | null>(null);
 
+  const [showOverrideDropdown, setShowOverrideDropdown] = useState(false);
+  
   const [snapshotCard, setSnapshotCard] = useState<Card | null>(null);
 
   useEffect(() => {
@@ -61,12 +63,47 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
       setNewComment('');
       setShowDeleteConfirm(false);
       setConflictError(null);
+      setShowOverrideDropdown(false);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, card?.id]);
 
-  if (!isOpen || !snapshotCard) return null;
+  // Synchronize AI fields when the store receives a newer version from sockets
+  useEffect(() => {
+    if (isOpen && card) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSnapshotCard(prev => {
+        if (!prev || prev.id !== card.id) return prev;
+        
+        // If the incoming card has a higher version...
+        if (card.version > prev.version) {
+          
+          // Determine if this update was purely from the AI.
+          // The AI only updates suggestedSp, spConfidence, spReasons, complexityStatus, and bumps version.
+          // It does NOT touch title, description, complexity, or assigneeId.
+          const isAIUpdate = 
+            card.title === prev.title && 
+            card.description === prev.description && 
+            card.complexity === prev.complexity && 
+            card.assigneeId === prev.assigneeId;
+
+          if (isAIUpdate) {
+            // It's safe to silently absorb the new version because no user edits were made.
+            // This prevents a 409 Conflict when we save our own ongoing description edits.
+            return card;
+          }
+          
+          // If a USER made the update (e.g. title changed), we DO NOT update snapshotCard.
+          // This guarantees that when WE click Save, we send our old version, correctly 
+          // triggering an OCC 409 conflict so we don't accidentally overwrite their work!
+        }
+        return prev;
+      });
+    }
+  }, [card, isOpen]);
+
+  if (!isOpen || !snapshotCard || !card) return null;
 
   const cardComments = comments[snapshotCard.id] || [];
   const cardHistory = activities[snapshotCard.id] || [];
@@ -149,6 +186,38 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
     }
   };
 
+  const handleAcceptAI = async () => {
+    if (!card.suggestedSp) return;
+    try {
+      const updated = await updateCard(snapshotCard.id, snapshotCard.columnId, snapshotCard.version, {
+        complexity: card.suggestedSp,
+        complexityStatus: 'ACCEPTED',
+      });
+      setSnapshotCard(updated);
+      setEditComplexity(updated.complexity || '');
+      addToast('AI suggestion accepted', 'success');
+      fetchActivity(snapshotCard.id, snapshotCard.boardId);
+    } catch {
+      addToast('Failed to accept AI suggestion', 'error');
+    }
+  };
+
+  const handleOverrideAI = async (sp: number) => {
+    try {
+      const updated = await updateCard(snapshotCard.id, snapshotCard.columnId, snapshotCard.version, {
+        complexity: sp,
+        complexityStatus: 'OVERRIDDEN',
+      });
+      setSnapshotCard(updated);
+      setEditComplexity(updated.complexity || '');
+      setShowOverrideDropdown(false);
+      addToast(`Complexity overridden to ${sp} SP`, 'success');
+      fetchActivity(snapshotCard.id, snapshotCard.boardId);
+    } catch {
+      addToast('Failed to override complexity', 'error');
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
@@ -223,6 +292,79 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         <span className="font-medium text-gray-800">{snapshotCard.complexity || 'Unestimated'}</span>
                       </div>
                     </div>
+                    
+                    {/* AI Complexity Section */}
+                    {card.suggestedSp !== null && (
+                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-lg p-4 mb-4 shadow-sm">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-purple-600 font-bold">✨ AI Complexity Inference</span>
+                            {card.complexityStatus === 'ACCEPTED' && (
+                              <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full border border-green-200">
+                                ACCEPTED
+                              </span>
+                            )}
+                            {card.complexityStatus === 'OVERRIDDEN' && (
+                              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                                OVERRIDDEN
+                              </span>
+                            )}
+                            {card.complexityStatus === 'PENDING' && (
+                              <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full border border-orange-200">
+                                PENDING
+                              </span>
+                            )}
+                          </div>
+                          {canEdit && (
+                            <div className="flex gap-2 relative">
+                              {card.complexityStatus !== 'ACCEPTED' && (
+                                <button onClick={handleAcceptAI} className="bg-purple-600 text-white text-xs font-medium px-3 py-1.5 rounded shadow hover:bg-purple-700 transition-colors">
+                                  Accept {card.suggestedSp} SP
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => setShowOverrideDropdown(!showOverrideDropdown)}
+                                className="bg-white text-purple-700 border border-purple-200 text-xs font-medium px-3 py-1.5 rounded shadow hover:bg-purple-50 transition-colors"
+                              >
+                                Override
+                              </button>
+                              {showOverrideDropdown && (
+                                <div className="absolute top-full right-0 mt-1 bg-white border rounded shadow-lg z-10 min-w-[120px] py-1">
+                                  {[1, 2, 3, 5, 8, 13].map((sp) => (
+                                    <button 
+                                      key={sp}
+                                      onClick={() => handleOverrideAI(sp)}
+                                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                                    >
+                                      {sp} SP
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mb-3">
+                          <div className="bg-white/60 p-3 rounded border border-purple-100 flex items-center justify-between">
+                            <span className="text-gray-600 text-sm">Suggested</span>
+                            <span className="text-xl font-black text-purple-700">{card.suggestedSp} <span className="text-sm font-normal text-purple-600">SP</span></span>
+                          </div>
+                          <div className="bg-white/60 p-3 rounded border border-purple-100 flex items-center justify-between">
+                            <span className="text-gray-600 text-sm">Confidence</span>
+                            <span className="text-xl font-black text-indigo-700">{card.spConfidence}%</span>
+                          </div>
+                        </div>
+                        <div className="bg-white/60 p-3 rounded border border-purple-100">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Reasoning</span>
+                          <ul className="list-disc pl-4 space-y-1">
+                            {(card.spReasons || []).map((reason, idx) => (
+                              <li key={idx} className="text-sm text-gray-700">{reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div>
                       <h3 className="font-bold text-gray-700 mb-2">Description</h3>
                       {snapshotCard.description ? (
@@ -368,6 +510,12 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         break;
                       case 'ASSIGNMENT_CHANGED':
                         description = <span>changed assignee from <strong className="text-gray-900">{String(m.from ?? 'Unassigned')}</strong> to <strong className="text-gray-900">{String(m.to ?? 'Unassigned')}</strong></span>;
+                        break;
+                      case 'AI_COMPLEXITY_ACCEPTED':
+                        description = m.title ? String(m.title) : 'accepted AI complexity suggestion';
+                        break;
+                      case 'AI_COMPLEXITY_OVERRIDDEN':
+                        description = m.title ? String(m.title) : 'overrode AI complexity suggestion';
                         break;
                       default:
                         description = log.type.replace(/_/g, ' ').toLowerCase();

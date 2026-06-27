@@ -4,8 +4,9 @@ import { columnRepository } from '../repositories/column.repository';
 import { activityLogService } from './activityLog.service';
 import { boardMemberRepository } from '../repositories/boardMember.repository';
 import { userRepository } from '../repositories/user.repository';
-import { Card } from '@prisma/client';
+import { Card, ComplexityStatus } from '@prisma/client';
 import { authzService } from './authorization.service';
+import { inferCardComplexity } from './ai.service';
 
 export class CardService {
   async getCards(boardId: string, userId: string): Promise<Card[]> {
@@ -65,6 +66,9 @@ export class CardService {
 
     await activityLogService.log(boardId, userId, 'CARD_CREATED', 'Card', card.id, { title: card.title });
 
+    // Asynchronously trigger AI complexity inference (fire-and-forget)
+    inferCardComplexity(card.id).catch(console.error);
+
     return card;
   }
 
@@ -72,7 +76,7 @@ export class CardService {
     cardId: string,
     userId: string,
     currentVersion: number,
-    data: { title?: string; description?: string; complexity?: number; assigneeId?: string }
+    data: { title?: string; description?: string; complexity?: number; assigneeId?: string; complexityStatus?: ComplexityStatus }
   ): Promise<Card> {
     const card = await cardRepository.findById(cardId);
     if (!card) {
@@ -94,8 +98,12 @@ export class CardService {
     }
 
     if (data.complexity !== undefined && data.complexity !== null) {
+      // Allow AI suggested story points to bypass board complexityMax if they are standard SP values
+      const standardSPs = [1, 2, 3, 5, 8, 13];
       const board = await boardRepository.findById(card.boardId);
-      if (data.complexity < 1 || data.complexity > (board?.complexityMax || 5)) {
+      const isStandardSP = standardSPs.includes(data.complexity);
+      
+      if (!isStandardSP && (data.complexity < 1 || data.complexity > (board?.complexityMax || 5))) {
         throw new Error('Invalid complexity');
       }
     }
@@ -146,6 +154,23 @@ export class CardService {
       }
 
       await activityLogService.log(card.boardId, userId, 'CARD_UPDATED', 'Card', card.id);
+
+      // Trigger AI inference if description changed
+      if (data.description !== undefined && data.description !== card.description) {
+        inferCardComplexity(card.id).catch(console.error);
+      }
+
+      // Log AI override/accept
+      if (data.complexityStatus === 'ACCEPTED' && card.complexityStatus !== 'ACCEPTED') {
+        await activityLogService.log(card.boardId, userId, 'AI_COMPLEXITY_ACCEPTED', 'Card', card.id, {
+          title: 'Accepted AI complexity suggestion.'
+        });
+      }
+      if (data.complexityStatus === 'OVERRIDDEN') {
+        await activityLogService.log(card.boardId, userId, 'AI_COMPLEXITY_OVERRIDDEN', 'Card', card.id, {
+          title: `Overrode AI complexity from ${card.suggestedSp ?? 'Unknown'} SP to ${data.complexity} SP.`
+        });
+      }
 
       return updatedCard;
     } catch (error: unknown) {
