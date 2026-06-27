@@ -113,6 +113,18 @@ cd client && npm run dev
 
 ---
 
+## GitHub Issues Import
+
+The GitHub Import feature is designed for high-performance and real-time responsiveness.
+- **Pagination**: Fully supported natively using GitHub's `Link` headers.
+- **Pull Requests**: Ignored automatically.
+- **Deduplication**: Incremental imports safely ignore duplicates.
+- **Import Limit**: The import is intentionally capped to the newest 20 issues.
+
+*Reason*: This limit preserves real-time Socket.IO responsiveness and respects Railway Free Tier CPU/RAM constraints by bounding the heavy board-wide AI recalculations. The importer still fully supports pagination internally to locate 20 importable issues even if the first pages contain only pull requests or already imported issues.
+
+---
+
 ## API Contract
 
 See [CONTRACT.md](./CONTRACT.md) for the full REST and Socket.io contract.

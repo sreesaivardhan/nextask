@@ -6,8 +6,8 @@ import { boardService } from './board.service';
 const prisma = new PrismaClient();
 
 export async function analyzeBoards(targetBoardId?: string): Promise<void> {
-  console.log(targetBoardId ? `[AI] Targeted analysis for board ${targetBoardId}` : '[AI] Scheduler started');
-  console.log('[AI] Starting analysis');
+  if (process.env.NODE_ENV === 'development') console.log(targetBoardId ? `[AI] Targeted analysis for board ${targetBoardId}` : '[AI] Scheduler started');
+  if (process.env.NODE_ENV === 'development') console.log('[AI] Starting analysis');
   const start = Date.now();
 
   const activeBoardIds = new Set<string>();
@@ -44,24 +44,24 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
   });
 
   for (const board of boards) {
-    console.log(`[AI] Board: ${board.name}`);
-    console.log(`[AI] ID: ${board.id}`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Board: ${board.name}`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] ID: ${board.id}`);
     
     const totalCards = board.columns.reduce((sum, col) => sum + col.cards.length, 0);
-    console.log(`[AI] Cards: ${totalCards}`);
-    console.log(`[AI] Columns: ${board.columns.length}`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Cards: ${totalCards}`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Columns: ${board.columns.length}`);
     
     // ==========================================
     // 1. BOTTLENECK DETECTION
     // ==========================================
-    console.log(`[AI] Analysis: Checking for bottlenecks`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Analysis: Checking for bottlenecks`);
 
     if (board.columns.length < 2) {
-      console.log('[AI] Result: Skipped');
-      console.log('[AI] Reason: Board has fewer than 2 columns');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Result: Skipped');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Reason: Board has fewer than 2 columns');
     } else if (totalCards < 5) {
-      console.log('[AI] Result: Skipped');
-      console.log('[AI] Reason: Board has too few cards (threshold: 5)');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Result: Skipped');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Reason: Board has too few cards (threshold: 5)');
     } else {
       let maxColumn = null;
       let maxCount = 0;
@@ -195,30 +195,30 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
         );
 
         if (isIdentical) {
-          console.log('[AI] Result: Skipped (Identical analysis)');
+          if (process.env.NODE_ENV === 'development') console.log('[AI] Result: Skipped (Identical analysis)');
         } else {
           const insight = await prisma.aIInsight.create({
             data: { boardId: board.id, type, title, summary, data },
           });
 
-          console.log('[AI] Result: Inserted');
+          if (process.env.NODE_ENV === 'development') console.log('[AI] Result: Inserted');
           const io = getIO();
           if (io) io.to(board.id).emit('ai:insight', insight);
         }
       } else {
-        console.log('[AI] Result: Skipped');
-        console.log('[AI] Reason: No bottleneck detected based on thresholds');
+        if (process.env.NODE_ENV === 'development') console.log('[AI] Result: Skipped');
+        if (process.env.NODE_ENV === 'development') console.log('[AI] Reason: No bottleneck detected based on thresholds');
       }
     }
 
     // ==========================================
     // 2. SPRINT RISK ASSESSMENT
     // ==========================================
-    console.log(`[AI] Analysis: Sprint Risk Assessment`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Analysis: Sprint Risk Assessment`);
     
     if (!board.sprintEndDate) {
-      console.log('[AI] Sprint Risk: Skipped');
-      console.log('[AI] Reason: No sprintEndDate');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Sprint Risk: Skipped');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Reason: No sprintEndDate');
     } else {
       const completionNames = ['done', 'completed', 'finished', 'resolved', 'closed'];
       let completedCards = 0;
@@ -271,12 +271,12 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
         risk
       };
       
-      console.log(`[AI] Sprint End: ${sprintEnd.toISOString()}`);
-      console.log(`[AI] Completed Cards: ${completedCards}`);
-      console.log(`[AI] Remaining Cards: ${remainingCards}`);
-      console.log(`[AI] Velocity: ${data.velocity}`);
-      console.log(`[AI] Required Velocity: ${data.requiredVelocity}`);
-      console.log(`[AI] Risk: ${risk}`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Sprint End: ${sprintEnd.toISOString()}`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Completed Cards: ${completedCards}`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Remaining Cards: ${remainingCards}`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Velocity: ${data.velocity}`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Required Velocity: ${data.requiredVelocity}`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Risk: ${risk}`);
 
       const latestSprintRisk = await prisma.aIInsight.findFirst({
         where: { boardId: board.id, type: 'SPRINT_RISK' },
@@ -298,13 +298,13 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
       );
       
       if (isIdentical) {
-        console.log('[AI] Sprint Risk Result: Skipped');
-        console.log('[AI] Reason: Identical analysis');
+        if (process.env.NODE_ENV === 'development') console.log('[AI] Sprint Risk Result: Skipped');
+        if (process.env.NODE_ENV === 'development') console.log('[AI] Reason: Identical analysis');
       } else {
         const insight = await prisma.aIInsight.create({
           data: { boardId: board.id, type, title, summary, data },
         });
-        console.log('[AI] Sprint Risk Result: Inserted');
+        if (process.env.NODE_ENV === 'development') console.log('[AI] Sprint Risk Result: Inserted');
         
         const io = getIO();
         if (io) io.to(board.id).emit('ai:insight', insight);
@@ -314,7 +314,7 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
     // ==========================================
     // 3. TASK DEADLINE PREDICTION
     // ==========================================
-    console.log(`[AI] Analysis: Task Deadline Prediction`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Analysis: Task Deadline Prediction`);
     
     let statsEvaluated = 0;
     let statsInserted = 0;
@@ -324,10 +324,10 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
     let statsSkippedNoSprint = 0;
 
     if (!board.sprintEndDate) {
-      console.log('[AI] Task Deadline: Skipped (no sprintEndDate)');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Task Deadline: Skipped (no sprintEndDate)');
       statsSkippedNoSprint += totalCards;
     } else if (totalCards === 0) {
-      console.log('[AI] Task Deadline: Skipped (no cards)');
+      if (process.env.NODE_ENV === 'development') console.log('[AI] Task Deadline: Skipped (no cards)');
     } else {
       // Clean up insights for cards that have been deleted
       const existingDeadlineInsights = await prisma.aIInsight.findMany({
@@ -343,7 +343,7 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
         const data = insight.data as Record<string, unknown>;
         const taskId = data?.taskId as string;
         if (taskId && !activeCardIds.has(taskId)) {
-          console.log(`[AI] Cleaning up obsolete insight for deleted card: ${taskId}`);
+          if (process.env.NODE_ENV === 'development') console.log(`[AI] Cleaning up obsolete insight for deleted card: ${taskId}`);
           await prisma.aIInsight.delete({ where: { id: insight.id } });
           const io = getIO();
           if (io) io.to(board.id).emit('ai:insight:removed', { insightId: insight.id, boardId: board.id });
@@ -564,50 +564,50 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
             }
           }
 
-          console.log('--------------------------------------------------');
-          console.log('[AI] Task Deadline Evaluation\n');
-          console.log(`Board:\n${board.name}\n`);
-          console.log(`Board ID:\n${board.id}\n`);
-          console.log(`Task ID:\n${card.id}\n`);
-          console.log(`Task Title:\n${card.title}\n`);
-          console.log(`Current Column:\n${col.name}\n`);
-          console.log(`Column ID:\n${col.id}\n`);
-          console.log(`Created At:\n${new Date(card.createdAt).toISOString()}\n`);
-          console.log(`Updated At:\n${new Date(card.updatedAt).toISOString()}\n`);
-          console.log(`Assignee:\n${assigneeName}\n`);
-          console.log(`Days Since Update:\n${idleDays.toFixed(1)}\n`);
-          console.log(`Sprint Remaining Days:\n${remainingDays.toFixed(1)}\n`);
-          console.log(`Sprint Risk:\n${sprintRiskDisplay}\n`);
-          console.log(`Score:\n${score}\n`);
-          console.log(`Risk:\n${risk}\n`);
-          console.log(`Reasons:\n[\n  ${reasons.join(',\n  ')}\n]\n`);
-          console.log(`Duplicate Found:\n${duplicateFound}\n`);
-          console.log(`Existing Insight ID:\n${existingInsightId}\n`);
-          console.log(`Decision:\n${decision}\n`);
+          if (process.env.NODE_ENV === 'development') console.log('--------------------------------------------------');
+          if (process.env.NODE_ENV === 'development') console.log('[AI] Task Deadline Evaluation\n');
+          if (process.env.NODE_ENV === 'development') console.log(`Board:\n${board.name}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Board ID:\n${board.id}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Task ID:\n${card.id}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Task Title:\n${card.title}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Current Column:\n${col.name}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Column ID:\n${col.id}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Created At:\n${new Date(card.createdAt).toISOString()}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Updated At:\n${new Date(card.updatedAt).toISOString()}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Assignee:\n${assigneeName}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Days Since Update:\n${idleDays.toFixed(1)}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Sprint Remaining Days:\n${remainingDays.toFixed(1)}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Sprint Risk:\n${sprintRiskDisplay}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Score:\n${score}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Risk:\n${risk}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Reasons:\n[\n  ${reasons.join(',\n  ')}\n]\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Duplicate Found:\n${duplicateFound}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Existing Insight ID:\n${existingInsightId}\n`);
+          if (process.env.NODE_ENV === 'development') console.log(`Decision:\n${decision}\n`);
           if (decision === 'INSERTED') {
-            console.log(`Insight ID:\n${newlyInsertedId}\n`);
+            if (process.env.NODE_ENV === 'development') console.log(`Insight ID:\n${newlyInsertedId}\n`);
           } else {
-            console.log(`Reason:\n${reasonText}\n`);
+            if (process.env.NODE_ENV === 'development') console.log(`Reason:\n${reasonText}\n`);
           }
-          console.log('--------------------------------------------------');
+          if (process.env.NODE_ENV === 'development') console.log('--------------------------------------------------');
         }
       }
     }
 
-    console.log('\n========== TASK DEADLINE SUMMARY ==========');
-    console.log(`Board:\n${board.name}\n`);
-    console.log(`Cards Evaluated:\n${statsEvaluated}\n`);
-    console.log(`Inserted:\n${statsInserted}\n`);
-    console.log(`Skipped Low Risk:\n${statsSkippedLowRisk}\n`);
-    console.log(`Skipped Duplicate:\n${statsSkippedDuplicate}\n`);
-    console.log(`Skipped Done:\n${statsSkippedDone}\n`);
-    console.log(`Skipped No Sprint:\n${statsSkippedNoSprint}\n`);
-    console.log('==========================================\n');
+    if (process.env.NODE_ENV === 'development') console.log('\n========== TASK DEADLINE SUMMARY ==========');
+    if (process.env.NODE_ENV === 'development') console.log(`Board:\n${board.name}\n`);
+    if (process.env.NODE_ENV === 'development') console.log(`Cards Evaluated:\n${statsEvaluated}\n`);
+    if (process.env.NODE_ENV === 'development') console.log(`Inserted:\n${statsInserted}\n`);
+    if (process.env.NODE_ENV === 'development') console.log(`Skipped Low Risk:\n${statsSkippedLowRisk}\n`);
+    if (process.env.NODE_ENV === 'development') console.log(`Skipped Duplicate:\n${statsSkippedDuplicate}\n`);
+    if (process.env.NODE_ENV === 'development') console.log(`Skipped Done:\n${statsSkippedDone}\n`);
+    if (process.env.NODE_ENV === 'development') console.log(`Skipped No Sprint:\n${statsSkippedNoSprint}\n`);
+    if (process.env.NODE_ENV === 'development') console.log('==========================================\n');
   }
 
   const duration = Date.now() - start;
-  console.log(`[AI] Duration: ${duration}ms`);
-  console.log('[AI] Finished');
+  if (process.env.NODE_ENV === 'development') console.log(`[AI] Duration: ${duration}ms`);
+  if (process.env.NODE_ENV === 'development') console.log('[AI] Finished');
 }
 
 /**
@@ -615,7 +615,7 @@ export async function analyzeBoards(targetBoardId?: string): Promise<void> {
  * Infers task complexity based on heuristics and historical similar cards.
  */
 export async function inferCardComplexity(cardId: string): Promise<void> {
-  console.log(`[AI] Starting complexity inference for card: ${cardId}`);
+  if (process.env.NODE_ENV === 'development') console.log(`[AI] Starting complexity inference for card: ${cardId}`);
   
   try {
     const card = await prisma.card.findUnique({
@@ -633,7 +633,7 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
     });
 
     if (!card || !card.board) {
-      console.log(`[AI] Card not found or has no board`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Card not found or has no board`);
       return;
     }
 
@@ -707,7 +707,7 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
         }
       });
 
-      const extractWords = (text: string) => {
+      const extractWords = (text: string): Set<string> => {
         return new Set(
           text.toLowerCase().split(/\W+/)
             .filter(w => w.length > 4 && !['about', 'there', 'which', 'their'].includes(w))
@@ -830,7 +830,7 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
       existingConfidence === confidence &&
       existingReasons === newReasonsStr
     ) {
-      console.log(`[AI] Inference identical to existing prediction. Skipping update.`);
+      if (process.env.NODE_ENV === 'development') console.log(`[AI] Inference identical to existing prediction. Skipping update.`);
       return;
     }
 
@@ -851,7 +851,7 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
       }
     });
 
-    console.log(`[AI] Persisted complexity inference for ${cardId}: ${suggestedSp} SP (${confidence}%)`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Persisted complexity inference for ${cardId}: ${suggestedSp} SP (${confidence}%)`);
 
     // Emit Socket
     const io = getIO();
@@ -869,10 +869,10 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
  */
 export async function invalidateHistoricalState(boardId: string, triggerCardId?: string, reason?: string): Promise<void> {
   try {
-    console.log(`\n========================================`);
-    console.log(`[AI] invalidate triggered by ${reason || 'unknown'}`);
-    console.log(`Board: ${boardId}`);
-    console.log(`Card: ${triggerCardId || 'none'}`);
+    if (process.env.NODE_ENV === 'development') console.log(`\n========================================`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] invalidate triggered by ${reason || 'unknown'}`);
+    if (process.env.NODE_ENV === 'development') console.log(`Board: ${boardId}`);
+    if (process.env.NODE_ENV === 'development') console.log(`Card: ${triggerCardId || 'none'}`);
 
     // Fetch done columns to count eligible historical cards for debugging
     const board = await prisma.board.findUnique({
@@ -892,7 +892,7 @@ export async function invalidateHistoricalState(boardId: string, triggerCardId?:
         complexityStatus: { in: ['ACCEPTED', 'OVERRIDDEN'] }
       }
     });
-    console.log(`Eligible historical cards: ${eligibleCount}`);
+    if (process.env.NODE_ENV === 'development') console.log(`Eligible historical cards: ${eligibleCount}`);
 
     const pendingCards = await prisma.card.findMany({
       where: {
@@ -902,8 +902,8 @@ export async function invalidateHistoricalState(boardId: string, triggerCardId?:
       }
     });
 
-    console.log(`Pending cards recalculated: ${pendingCards.length}`);
-    console.log(`========================================\n`);
+    if (process.env.NODE_ENV === 'development') console.log(`Pending cards recalculated: ${pendingCards.length}`);
+    if (process.env.NODE_ENV === 'development') console.log(`========================================\n`);
 
     for (const card of pendingCards) {
       await inferCardComplexity(card.id).catch(console.error);
@@ -919,7 +919,7 @@ export async function invalidateHistoricalState(boardId: string, triggerCardId?:
  */
 export async function invalidateBoardInsights(boardId: string): Promise<void> {
   try {
-    console.log(`[AI] Invalidating and recalculating insights for board ${boardId}`);
+    if (process.env.NODE_ENV === 'development') console.log(`[AI] Invalidating and recalculating insights for board ${boardId}`);
     await analyzeBoards(boardId);
   } catch (err) {
     console.error(`[AI] Error invalidating board insights for ${boardId}:`, err);

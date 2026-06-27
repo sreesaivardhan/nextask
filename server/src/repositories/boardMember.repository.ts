@@ -19,6 +19,7 @@ export class BoardMemberRepository {
     }) as unknown as BoardMemberWithUser[];
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async getMember(boardId: string, userId: string) {
     return prisma.boardMember.findUnique({
       where: { boardId_userId: { boardId, userId } },
@@ -26,6 +27,7 @@ export class BoardMemberRepository {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async addMember(boardId: string, userId: string, role: import('@prisma/client').BoardRole) {
     return prisma.boardMember.create({
       data: { boardId, userId, role },
@@ -33,6 +35,7 @@ export class BoardMemberRepository {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async updateRole(boardId: string, userId: string, role: import('@prisma/client').BoardRole) {
     return prisma.boardMember.update({
       where: { boardId_userId: { boardId, userId } },
@@ -41,6 +44,7 @@ export class BoardMemberRepository {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async removeMember(boardId: string, userId: string) {
     return prisma.boardMember.delete({
       where: { boardId_userId: { boardId, userId } }

@@ -3,6 +3,7 @@ import { boardController } from '../controllers/board.controller';
 import { requireSession } from '../middleware/auth';
 import { columnRouter } from './column.routes';
 import { boardMemberController } from '../controllers/boardMember.controller';
+import { githubController } from '../controllers/github.controller';
 
 export const boardRouter = Router();
 
@@ -26,3 +27,7 @@ boardRouter.use('/:boardId/columns', columnRouter);
 
 // AI Insights
 boardRouter.get('/:boardId/ai-insights', boardController.getAIInsights);
+
+// GitHub Import
+boardRouter.post('/:boardId/github/preview', githubController.previewImport);
+boardRouter.post('/:boardId/github/import', githubController.executeImport);

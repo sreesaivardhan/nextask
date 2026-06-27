@@ -8,6 +8,7 @@ export class BoardMemberService {
     return boardMemberRepository.findMembersByBoardId(boardId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async addMember(boardId: string, requesterId: string, targetUserId: string, role: BoardRole) {
     await authzService.requireBoardRole(boardId, requesterId, ['OWNER', 'ADMIN']);
     const existing = await authzService.getMemberRole(boardId, targetUserId);
@@ -16,6 +17,7 @@ export class BoardMemberService {
     return boardMemberRepository.addMember(boardId, targetUserId, role);
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async updateRole(boardId: string, requesterId: string, targetUserId: string, newRole: BoardRole) {
     const requesterRole = await authzService.getMemberRole(boardId, requesterId);
     if (!requesterRole || !['OWNER', 'ADMIN'].includes(requesterRole)) {
@@ -29,6 +31,7 @@ export class BoardMemberService {
     return boardMemberRepository.updateRole(boardId, targetUserId, newRole);
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async removeMember(boardId: string, requesterId: string, targetUserId: string) {
     const requesterRole = await authzService.getMemberRole(boardId, requesterId);
     if (!requesterRole || !['OWNER', 'ADMIN'].includes(requesterRole)) {
@@ -41,6 +44,7 @@ export class BoardMemberService {
     return boardMemberRepository.removeMember(boardId, targetUserId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async leaveBoard(boardId: string, userId: string) {
     const role = await authzService.getMemberRole(boardId, userId);
     if (!role) throw new Error('Member not found');

@@ -16,4 +16,5 @@ export const env = {
   databaseUrl: requireEnv('DATABASE_URL'),
   sessionSecret: requireEnv('SESSION_SECRET'),
   clientUrls: (process.env['CLIENT_URL'] ?? 'http://localhost:5173,http://localhost:4173').split(','),
+  githubToken: process.env['GITHUB_TOKEN'],
 } as const;

@@ -22,6 +22,8 @@
 | Email Authentication                                       | ✅      |
 | **Google OAuth**                                           | ❌      |
 | **GitHub OAuth**                                           | ❌      |
+| **ui improvements and css changes**                        | ❌      |
+| **forgot pass word setup and deploy repo cleanup**         | ❌      |
 | **Railway Deployment**                                     | ❌      |
 | **10 simultaneous users Documentation**                    | ❌      |
 | **README**                                                 | ❌      |
