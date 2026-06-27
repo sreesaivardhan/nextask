@@ -314,7 +314,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
             )}
 
             {activeTab === 'history' && (
-              <div className="flex flex-col space-y-3">
+              <div className="flex flex-col pt-2 pb-4">
                 {cardHistory.length === 0 ? (
                   <div className="text-gray-500 text-center py-8 italic text-sm">No activity recorded.</div>
                 ) : (
@@ -334,11 +334,11 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         description = (
                           <span>
                             renamed card from{' '}
-                            <em className="inline-block max-w-[120px] truncate align-bottom" title={String(m.from)}>
+                            <em className="text-gray-600">
                               "{String(m.from)}"
                             </em>{' '}
                             to{' '}
-                            <em className="inline-block max-w-[120px] truncate align-bottom" title={String(m.to)}>
+                            <em className="text-gray-900">
                               "{String(m.to)}"
                             </em>
                           </span>
@@ -357,23 +357,28 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         description = 'added a comment';
                         break;
                       case 'COMPLEXITY_CHANGED':
-                        description = <span>changed complexity from <strong>{String(m.from ?? 'Unset')}</strong> to <strong>{String(m.to ?? 'Unset')}</strong></span>;
+                        description = <span>changed complexity from <strong className="text-gray-900">{String(m.from ?? 'Unset')}</strong> to <strong className="text-gray-900">{String(m.to ?? 'Unset')}</strong></span>;
                         break;
                       case 'ASSIGNMENT_CHANGED':
-                        description = <span>changed assignee from <strong>{String(m.from ?? 'Unassigned')}</strong> to <strong>{String(m.to ?? 'Unassigned')}</strong></span>;
+                        description = <span>changed assignee from <strong className="text-gray-900">{String(m.from ?? 'Unassigned')}</strong> to <strong className="text-gray-900">{String(m.to ?? 'Unassigned')}</strong></span>;
                         break;
                       default:
                         description = log.type.replace(/_/g, ' ').toLowerCase();
                     }
 
                     return (
-                      <div key={log.id} className="flex gap-3 text-sm py-2 border-b last:border-0">
-                        <div className="shrink-0 text-gray-400 text-xs whitespace-nowrap pt-0.5 w-28">
-                          {new Date(log.createdAt).toLocaleString()}
+                      <div key={log.id} className="flex flex-col py-4 border-b border-gray-100 last:border-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold text-xs shrink-0">
+                            {actor.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-bold text-sm text-gray-900">{actor}</span>
                         </div>
-                        <div className="flex-1 text-gray-700">
-                          <span className="font-semibold text-gray-800">{actor}</span>{' '}
+                        <div className="text-sm text-gray-700 ml-8 mb-2 whitespace-normal break-words">
                           {description}
+                        </div>
+                        <div className="text-xs text-gray-500 ml-8">
+                          {new Date(log.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
                     );

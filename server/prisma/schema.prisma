@@ -26,6 +26,12 @@ enum AIInsightType {
   TASK_DEADLINE
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -34,6 +40,11 @@ model User {
   githubUsername  String?
 
   createdAt DateTime @default(now())
+
+  email           String? @unique
+  passwordHash    String?
+  authProvider    AuthProvider @default(LOCAL)
+  emailVerified   Boolean @default(false)
 
   sessions            Session[]
   ownedBoards         Board[]       @relation("BoardOwner")

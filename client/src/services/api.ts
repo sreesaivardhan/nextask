@@ -1,4 +1,5 @@
 import { socketService } from './socketService';
+import { useSessionStore } from '../stores/sessionStore';
 
 const API_URL = '/api';
 
@@ -26,6 +27,14 @@ async function request(endpoint: string, options: RequestInit) {
     ...options.headers,
   };
   const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers, credentials: 'include' });
+
+  if (response.status === 401) {
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+      useSessionStore.getState().clearSessionLocally?.();
+      window.location.href = '/login';
+      return new Promise(() => {}); // never resolve, preventing downstream toasts
+    }
+  }
 
   if (!response.ok) {
     let errorMsg = 'An error occurred';

@@ -10,8 +10,8 @@
 | Task Deadline Prediction                                   | ✅      |
 | AI Insights Panel                                          | ✅      |
 | Board Settings                                             | ✅      |
-| **Last-write-wins Conflict Handling**                      | 🟡      |
-| **Conflict Notification**                                  | 🟡      |
+| Last-write-wins Conflict Handling                          | ✅      |
+| Conflict Notification                                      | ✅      |
 | **Multi-user Board Collaboration (Invites/Board Members)** | ❌      |
 | **Task Complexity Inference**                              | ❌      |
 | **GitHub Issues Import**                                   | ❌      |
