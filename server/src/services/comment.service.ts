@@ -1,22 +1,16 @@
 import { commentRepository } from '../repositories/comment.repository';
 import { activityLogService } from './activityLog.service';
-import { boardRepository } from '../repositories/board.repository';
 import { Comment } from '@prisma/client';
+import { authzService } from './authorization.service';
 
 export class CommentService {
   async getComments(cardId: string, boardId: string, userId: string): Promise<Comment[]> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']);
     return commentRepository.findByCardId(cardId);
   }
 
   async createComment(cardId: string, boardId: string, userId: string, body: string): Promise<Comment> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER']);
 
     const trimmedBody = body.trim();
     if (!trimmedBody || trimmedBody.length > 1000) {
@@ -32,10 +26,7 @@ export class CommentService {
   }
 
   async deleteComment(commentId: string, cardId: string, boardId: string, userId: string): Promise<void> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER']);
 
     const comment = await commentRepository.findById(commentId);
     if (!comment || comment.cardId !== cardId) {

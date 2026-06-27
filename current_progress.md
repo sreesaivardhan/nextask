@@ -19,7 +19,7 @@
 | **Weekly Digest**                                          | ❌      |
 | **Team View**                                              | ❌      |
 | **Dashboard Analytics**                                    | ❌      |
-| **Email Authentication**                                   | ❌      |
+| Email Authentication                                       | ✅      |
 | **Google OAuth**                                           | ❌      |
 | **GitHub OAuth**                                           | ❌      |
 | **Railway Deployment**                                     | ❌      |

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useColumnStore } from '../stores/columnStore';
 import { useBoardStore } from '../stores/boardStore';
 import { useToastStore } from '../stores/toastStore';
@@ -10,6 +10,7 @@ import { useActivityStore } from '../stores/activityStore';
 import { useInsightStore } from '../stores/insightStore';
 import { CardModal } from '../components/CardModal';
 import { AIInsightsPanel } from '../components/AIInsightsPanel';
+import { ShareModal } from '../components/ShareModal';
 import { useBoardMemberStore } from '../stores/boardMemberStore';
 import { socketService } from '../services/socketService';
 import { useSessionStore } from '../stores/sessionStore';
@@ -30,6 +31,7 @@ import { CardItem } from '../components/CardItem';
 
 export function BoardPage(): React.ReactElement {
   const { boardId } = useParams<{ boardId: string }>();
+  const navigate = useNavigate();
   const { columns, fetchColumns, createColumn, updateColumn, deleteColumn, reorderColumn, isLoading,
     socketAddColumn, socketUpdateColumn, socketRemoveColumn, socketMoveColumn } = useColumnStore();
   const { boards, fetchBoards, socketUpdateBoard } = useBoardStore();
@@ -45,6 +47,7 @@ export function BoardPage(): React.ReactElement {
   const [newColumnName, setNewColumnName] = useState('');
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnName, setEditingColumnName] = useState('');
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [columnToDelete, setColumnToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const [newCardTitle, setNewCardTitle] = useState<{ [columnId: string]: string }>({});
@@ -57,7 +60,26 @@ export function BoardPage(): React.ReactElement {
   const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
   const typingTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const board = boards.find((b) => b.id === boardId);
+  const boardMembers = boardId ? boardMemberMap[boardId] || [] : [];
+  const currentUserMember = boardMembers.find(m => m.userId === user?.id);
+  const currentUserRole = currentUserMember?.role || 'VIEWER'; // fallback
+
+  const canEdit = currentUserRole !== 'VIEWER';
+  const canMove = currentUserRole !== 'VIEWER';
+  const canDelete = currentUserRole !== 'VIEWER';
+  const canManageBoard = currentUserRole === 'OWNER';
+  const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
+
+  // Sort members for header display (Owner first)
+  const ROLE_WEIGHT = { OWNER: 1, ADMIN: 2, MEMBER: 3, VIEWER: 4 };
+  const sortedMembers = [...boardMembers].sort((a, b) => {
+    return (ROLE_WEIGHT[a.role as keyof typeof ROLE_WEIGHT] || 99) - (ROLE_WEIGHT[b.role as keyof typeof ROLE_WEIGHT] || 99);
+  });
+  const displayMembers = sortedMembers.slice(0, 3);
+  const extraMembersCount = sortedMembers.length - 3;
 
   // ── Data fetching ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -181,10 +203,17 @@ export function BoardPage(): React.ReactElement {
       socketRemoveInsight(insightId, boardId);
     };
 
+    const onMembersUpdated = ({ boardId: updatedBoardId }: { boardId: string }) => {
+      if (updatedBoardId === boardId) {
+        useBoardMemberStore.getState().forceFetchMembers(boardId);
+      }
+    };
+
     console.log('Component mounted');
     console.log('Listener registered');
     socket.on('connect', onConnect);
     socket.on('board:updated', onBoardUpdated);
+    socket.on('board:members_updated', onMembersUpdated);
     socket.on('column:created', onColumnCreated);
     socket.on('column:updated', onColumnUpdated);
     socket.on('column:deleted', onColumnDeleted);
@@ -208,6 +237,7 @@ export function BoardPage(): React.ReactElement {
       socketService.leaveBoard(boardId);
       socket.off('connect', onConnect);
       socket.off('board:updated', onBoardUpdated);
+      socket.off('board:members_updated', onMembersUpdated);
       socket.off('column:created', onColumnCreated);
       socket.off('column:updated', onColumnUpdated);
       socket.off('column:deleted', onColumnDeleted);
@@ -231,6 +261,18 @@ export function BoardPage(): React.ReactElement {
     socketAddComment, socketRemoveComment, socketAddActivity, socketAddInsight, socketRemoveInsight]);
 
   // ── Column handlers ───────────────────────────────────────────────────────
+  const handleLeave = async () => {
+    if (!boardId) return;
+    try {
+      await useBoardMemberStore.getState().leaveBoard(boardId);
+      addToast('Left board successfully', 'success');
+      navigate('/dashboard');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } }; message: string };
+      addToast(error.response?.data?.error || error.message, 'error');
+    }
+  };
+
   const handleCreateColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!boardId) return;
@@ -500,14 +542,53 @@ export function BoardPage(): React.ReactElement {
           &larr; Back to Dashboard
         </Link>
         <h1 className="text-2xl font-bold text-gray-800 truncate flex-1" title={board?.name}>{board?.name}</h1>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex -space-x-2">
+            {displayMembers.map((m) => (
+              <div
+                key={m.userId}
+                className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs border-2 border-white"
+                title={`${m.user.displayName} (${m.role})`}
+              >
+                {m.user.displayName.charAt(0).toUpperCase()}
+              </div>
+            ))}
+            {extraMembersCount > 0 && (
+              <div
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 font-bold text-xs border-2 border-white"
+                title={`${extraMembersCount} more members`}
+              >
+                +{extraMembersCount}
+              </div>
+            )}
+          </div>
+          
+          {(canManageMembers || canManageBoard) && (
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="bg-blue-600 text-white px-4 py-1.5 rounded font-medium text-sm hover:bg-blue-700 flex items-center gap-2"
+            >
+              Share
+            </button>
+          )}
+          {currentUserRole !== 'OWNER' && (
+            <button
+              onClick={() => setShowLeaveConfirm(true)}
+              className="bg-red-50 text-red-600 border border-red-200 px-4 py-1.5 rounded font-medium text-sm hover:bg-red-100 hover:text-red-700 transition flex items-center gap-2"
+            >
+              Leave Board
+            </button>
+          )}
+        </div>
       </div>
 
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
+        onDragStart={canMove ? handleDragStart : undefined}
+        onDragOver={canMove ? handleDragOver : undefined}
+        onDragEnd={canMove ? handleDragEnd : undefined}
       >
         <div className="flex-1 overflow-x-auto p-6 flex gap-6 items-start bg-gray-50 min-h-0">
           {columns.map((column, index) => (
@@ -521,36 +602,38 @@ export function BoardPage(): React.ReactElement {
               setEditingColumnName={setEditingColumnName}
               handleRenameColumn={handleRenameColumn}
               setEditingColumnId={setEditingColumnId}
-              handleMoveLeft={() => handleMoveLeft(index)}
-              handleMoveRight={() => handleMoveRight(index)}
+              handleMoveLeft={canEdit ? () => handleMoveLeft(index) : undefined}
+              handleMoveRight={canEdit ? () => handleMoveRight(index) : undefined}
               isFirst={index === 0}
               isLast={index === columns.length - 1}
-              handleDeleteColumn={() => handleDeleteColumn(column.id, column.name)}
+              handleDeleteColumn={canEdit ? () => handleDeleteColumn(column.id, column.name) : undefined}
               setSelectedCard={setSelectedCard}
               typingUsers={typingUsers}
               boardMemberMap={boardMemberMap}
               boardId={boardId}
               newCardTitle={newCardTitle[column.id]}
               handleCardInputChange={handleCardInputChange}
-              handleCreateCard={handleCreateCard}
+              handleCreateCard={canEdit ? handleCreateCard : undefined}
             />
           ))}
 
-          <div className="bg-gray-100 rounded w-80 flex-shrink-0 p-3">
-            <form onSubmit={handleCreateColumn} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="New column name..."
-                className="flex-1 border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
-                maxLength={100}
-              />
-              <button type="submit" className="bg-blue-600 text-white px-3 py-2 rounded font-medium hover:bg-blue-700 text-sm">
-                Add
-              </button>
-            </form>
-          </div>
+          {canEdit && (
+            <div className="bg-gray-100 rounded w-80 flex-shrink-0 p-3">
+              <form onSubmit={handleCreateColumn} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="New column name..."
+                  className="flex-1 border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                  maxLength={100}
+                />
+                <button type="submit" className="bg-blue-600 text-white px-3 py-2 rounded font-medium hover:bg-blue-700 text-sm">
+                  Add
+                </button>
+              </form>
+            </div>
+          )}
           
           {boardId && <AIInsightsPanel boardId={boardId} />}
         </div>
@@ -583,6 +666,24 @@ export function BoardPage(): React.ReactElement {
         onClose={() => setSelectedCard(null)}
         boardId={boardId}
         boardComplexityMax={board && 'complexityMax' in board ? (board as { complexityMax?: number }).complexityMax : 5}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        canComment={canEdit} // If they can edit, they can comment, for now let's just use canEdit as canComment isn't explicitly defined otherwise, wait: viewer cannot edit but maybe can comment? Prompt: VIEWER is strictly read-only.
+      />
+      {isShareModalOpen && boardId && (
+        <ShareModal
+          boardId={boardId}
+          onClose={() => setIsShareModalOpen(false)}
+          currentUserRole={currentUserRole}
+        />
+      )}
+      <ConfirmDialog
+        isOpen={showLeaveConfirm}
+        title="Leave Board?"
+        message="You will immediately lose access to this board. Only another board administrator can invite you back."
+        onConfirm={handleLeave}
+        onCancel={() => setShowLeaveConfirm(false)}
+        confirmText="Leave Board"
       />
     </div>
   );

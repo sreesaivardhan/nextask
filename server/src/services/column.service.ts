@@ -1,76 +1,63 @@
 import { columnRepository } from '../repositories/column.repository';
-import { boardRepository } from '../repositories/board.repository';
 import { Column } from '@prisma/client';
+import { authzService } from './authorization.service';
 
 export class ColumnService {
   async getColumns(boardId: string, userId: string): Promise<Column[]> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']);
     return columnRepository.findAllByBoardId(boardId);
   }
 
   async createColumn(boardId: string, userId: string, name: string): Promise<Column> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN']);
 
     const trimmedName = name.trim();
-    if (!trimmedName || trimmedName.length > 100) {
+    if (!trimmedName || trimmedName.length > 50) {
       throw new Error('Invalid column name');
     }
 
     const maxPos = await columnRepository.getMaxPosition(boardId);
-    return columnRepository.create(boardId, trimmedName, maxPos + 65535);
+    const position = maxPos + 65535;
+
+    return columnRepository.create(boardId, trimmedName, position);
   }
 
-  async updateColumn(boardId: string, columnId: string, userId: string, name: string): Promise<Column> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
-
+  async updateColumn(columnId: string, userId: string, name: string): Promise<Column> {
     const column = await columnRepository.findById(columnId);
-    if (!column || column.boardId !== boardId) {
+    if (!column) {
       throw new Error('Column not found');
     }
 
+    await authzService.requireBoardRole(column.boardId, userId, ['OWNER', 'ADMIN']);
+
     const trimmedName = name.trim();
-    if (!trimmedName || trimmedName.length > 100) {
+    if (!trimmedName || trimmedName.length > 50) {
       throw new Error('Invalid column name');
     }
 
     return columnRepository.update(columnId, { name: trimmedName });
   }
 
-  async deleteColumn(boardId: string, columnId: string, userId: string): Promise<void> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
-
+  async deleteColumn(columnId: string, userId: string): Promise<void> {
     const column = await columnRepository.findById(columnId);
-    if (!column || column.boardId !== boardId) {
+    if (!column) {
       throw new Error('Column not found');
     }
+
+    await authzService.requireBoardRole(column.boardId, userId, ['OWNER', 'ADMIN']);
 
     await columnRepository.delete(columnId);
   }
 
-  async reorderColumn(boardId: string, columnId: string, userId: string, newPosition: number): Promise<Column> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
-
+  async reorderColumn(columnId: string, userId: string, position: number): Promise<Column> {
     const column = await columnRepository.findById(columnId);
-    if (!column || column.boardId !== boardId) {
+    if (!column) {
       throw new Error('Column not found');
     }
 
-    return columnRepository.update(columnId, { position: newPosition });
+    await authzService.requireBoardRole(column.boardId, userId, ['OWNER', 'ADMIN']);
+
+    return columnRepository.update(columnId, { position });
   }
 }
 

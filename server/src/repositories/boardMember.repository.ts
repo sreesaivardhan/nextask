@@ -18,6 +18,34 @@ export class BoardMemberRepository {
       orderBy: { joinedAt: 'asc' },
     }) as unknown as BoardMemberWithUser[];
   }
+
+  async getMember(boardId: string, userId: string) {
+    return prisma.boardMember.findUnique({
+      where: { boardId_userId: { boardId, userId } },
+      include: { user: { select: { id: true, displayName: true, email: true } } }
+    });
+  }
+
+  async addMember(boardId: string, userId: string, role: import('@prisma/client').BoardRole) {
+    return prisma.boardMember.create({
+      data: { boardId, userId, role },
+      include: { user: { select: { id: true, displayName: true, email: true } } }
+    });
+  }
+
+  async updateRole(boardId: string, userId: string, role: import('@prisma/client').BoardRole) {
+    return prisma.boardMember.update({
+      where: { boardId_userId: { boardId, userId } },
+      data: { role },
+      include: { user: { select: { id: true, displayName: true, email: true } } }
+    });
+  }
+
+  async removeMember(boardId: string, userId: string) {
+    return prisma.boardMember.delete({
+      where: { boardId_userId: { boardId, userId } }
+    });
+  }
 }
 
 export const boardMemberRepository = new BoardMemberRepository();

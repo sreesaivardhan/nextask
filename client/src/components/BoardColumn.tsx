@@ -13,18 +13,18 @@ interface BoardColumnProps {
   setEditingColumnName: (name: string) => void;
   handleRenameColumn: (columnId: string) => void;
   setEditingColumnId: (id: string | null) => void;
-  handleMoveLeft: () => void;
-  handleMoveRight: () => void;
+  handleMoveLeft?: () => void;
+  handleMoveRight?: () => void;
   isFirst: boolean;
   isLast: boolean;
-  handleDeleteColumn: () => void;
+  handleDeleteColumn?: () => void;
   setSelectedCard: (card: Card) => void;
   typingUsers: Record<string, string>;
   boardMemberMap: Record<string, Array<{ userId: string; user: { displayName: string } }>>;
   boardId?: string;
   newCardTitle: string;
   handleCardInputChange: (columnId: string, value: string) => void;
-  handleCreateCard: (e: React.FormEvent, columnId: string) => void;
+  handleCreateCard?: (e: React.FormEvent, columnId: string) => void;
 }
 
 export function BoardColumn({
@@ -124,16 +124,18 @@ export function BoardColumn({
           })}
         </SortableContext>
 
-        <form onSubmit={(e) => handleCreateCard(e, columnId)} className="mt-2">
-          <input
-            type="text"
-            placeholder="Add a card..."
-            className="w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            value={newCardTitle || ''}
-            onChange={(e) => handleCardInputChange(columnId, e.target.value)}
-            maxLength={200}
-          />
-        </form>
+        {handleCreateCard && (
+          <form onSubmit={(e) => handleCreateCard(e, columnId)} className="mt-2">
+            <input
+              type="text"
+              placeholder="Add a card..."
+              className="w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              value={newCardTitle || ''}
+              onChange={(e) => handleCardInputChange(columnId, e.target.value)}
+              maxLength={200}
+            />
+          </form>
+        )}
       </div>
     </div>
   );

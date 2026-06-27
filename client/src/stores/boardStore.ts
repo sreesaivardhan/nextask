@@ -7,6 +7,7 @@ export interface Board {
   complexityMax?: number;
   sprintEndDate?: string;
   createdAt: string;
+  ownerId: string;
 }
 
 interface BoardStore {

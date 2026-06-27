@@ -51,7 +51,7 @@ export class ColumnController {
       const userId = req.user!.id;
       const { boardId, columnId } = req.params;
       const { name } = req.body;
-      const column = await columnService.updateColumn(boardId, columnId, userId, name || '');
+      const column = await columnService.updateColumn(columnId, userId, name || '');
       res.status(200).json(column);
       const socketId = senderSocketId(req);
       const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);
@@ -77,7 +77,7 @@ export class ColumnController {
     try {
       const userId = req.user!.id;
       const { boardId, columnId } = req.params;
-      await columnService.deleteColumn(boardId, columnId, userId);
+      await columnService.deleteColumn(columnId, userId);
       res.status(204).send();
       const socketId = senderSocketId(req);
       const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);
@@ -106,7 +106,7 @@ export class ColumnController {
         return;
       }
 
-      const column = await columnService.reorderColumn(boardId, columnId, userId, position);
+      const column = await columnService.reorderColumn(columnId, userId, position);
       res.status(200).json(column);
       const socketId = senderSocketId(req);
       const emitter = socketId ? getIO().to(boardId).except(socketId) : getIO().to(boardId);

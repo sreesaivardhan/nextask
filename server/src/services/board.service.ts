@@ -1,5 +1,6 @@
 import { boardRepository } from '../repositories/board.repository';
 import { Board } from '@prisma/client';
+import { authzService } from './authorization.service';
 
 export class BoardService {
   async getBoards(userId: string): Promise<Board[]> {
@@ -7,10 +8,7 @@ export class BoardService {
   }
 
   async getBoardById(boardId: string, userId: string): Promise<Board> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']);
     const board = await boardRepository.findById(boardId);
     if (!board) {
       throw new Error('Board not found');
@@ -27,10 +25,7 @@ export class BoardService {
   }
 
   async updateBoard(boardId: string, userId: string, data: { name?: string; sprintEndDate?: Date | null; complexityMax?: number | null }): Promise<Board> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER']);
 
     const updateData: { name?: string; sprintEndDate?: Date | null; complexityMax?: number | null } = {};
     
@@ -57,21 +52,12 @@ export class BoardService {
   }
 
   async deleteBoard(boardId: string, userId: string): Promise<void> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
-
+    await authzService.requireBoardRole(boardId, userId, ['OWNER']);
     await boardRepository.delete(boardId);
   }
 
   async getAIInsights(boardId: string, userId: string): Promise<import('@prisma/client').AIInsight[]> {
-    // Validate access
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
-
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']);
     const insights = await boardRepository.findAIInsights(boardId);
     return insights;
   }

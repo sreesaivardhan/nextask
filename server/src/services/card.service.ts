@@ -5,13 +5,11 @@ import { activityLogService } from './activityLog.service';
 import { boardMemberRepository } from '../repositories/boardMember.repository';
 import { userRepository } from '../repositories/user.repository';
 import { Card } from '@prisma/client';
+import { authzService } from './authorization.service';
 
 export class CardService {
   async getCards(boardId: string, userId: string): Promise<Card[]> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']);
     return cardRepository.findAllByBoardId(boardId);
   }
 
@@ -21,10 +19,7 @@ export class CardService {
     userId: string,
     data: { title: string; description?: string; complexity?: number; assigneeId?: string }
   ): Promise<Card> {
-    const hasAccess = await boardRepository.isMember(boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER']);
 
     const column = await columnRepository.findById(columnId);
     if (!column || column.boardId !== boardId) {
@@ -84,10 +79,7 @@ export class CardService {
       throw new Error('Card not found');
     }
 
-    const hasAccess = await boardRepository.isMember(card.boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(card.boardId, userId, ['OWNER', 'ADMIN', 'MEMBER']);
 
     if (data.title !== undefined) {
       const trimmedTitle = data.title.trim();
@@ -176,10 +168,7 @@ export class CardService {
       throw new Error('Card not found');
     }
 
-    const hasAccess = await boardRepository.isMember(card.boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(card.boardId, userId, ['OWNER', 'ADMIN', 'MEMBER']);
 
     const column = await columnRepository.findById(data.columnId);
     if (!column || column.boardId !== card.boardId) {
@@ -214,10 +203,7 @@ export class CardService {
       throw new Error('Card not found');
     }
 
-    const hasAccess = await boardRepository.isMember(card.boardId, userId);
-    if (!hasAccess) {
-      throw new Error('Unauthorized access to board');
-    }
+    await authzService.requireBoardRole(card.boardId, userId, ['OWNER', 'ADMIN', 'MEMBER']);
 
     await cardRepository.delete(cardId);
     await activityLogService.log(card.boardId, userId, 'CARD_DELETED', 'Card', card.id, { title: card.title });

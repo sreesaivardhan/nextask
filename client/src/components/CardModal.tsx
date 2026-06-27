@@ -14,9 +14,12 @@ interface CardModalProps {
   onClose: () => void;
   boardId?: string;
   boardComplexityMax?: number;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canComment?: boolean;
 }
 
-export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax = 5 }: CardModalProps): React.ReactElement | null {
+export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax = 5, canEdit = false, canDelete = false, canComment = false }: CardModalProps): React.ReactElement | null {
   const { updateCard, deleteCard } = useCardStore();
   const { comments, fetchComments, createComment, deleteComment } = useCommentStore();
   const { activities, fetchActivity } = useActivityStore();
@@ -287,29 +290,33 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                           <span className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</span>
                         </div>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.body}</p>
-                        <button 
-                          onClick={() => deleteComment(comment.id, snapshotCard.id, snapshotCard.boardId)}
-                          className="text-xs text-red-500 hover:text-red-700 mt-2"
-                        >
-                          Delete
-                        </button>
+                        {canComment && (
+                          <button 
+                            onClick={() => deleteComment(comment.id, snapshotCard.id, snapshotCard.boardId)}
+                            className="text-xs text-red-500 hover:text-red-700 mt-2"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     ))
                   )}
                 </div>
-                <form onSubmit={handleAddComment} className="flex gap-2 pt-2 border-t">
-                  <input
-                    type="text"
-                    className="flex-1 border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="Write a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    maxLength={1000}
-                  />
-                  <button type="submit" disabled={!newComment.trim()} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
-                    Send
-                  </button>
-                </form>
+                {canComment && (
+                  <form onSubmit={handleAddComment} className="flex gap-2 pt-2 border-t">
+                    <input
+                      type="text"
+                      className="flex-1 border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Write a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      maxLength={1000}
+                    />
+                    <button type="submit" disabled={!newComment.trim()} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+                      Send
+                    </button>
+                  </form>
+                )}
               </div>
             )}
 
@@ -392,17 +399,23 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
           <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
             {activeTab === 'details' ? (
               <>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="text-red-500 hover:text-red-700 font-medium text-sm"
-                >
-                  Delete Card
-                </button>
+                <div>
+                  {canDelete && (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="text-red-500 hover:text-red-700 font-medium text-sm"
+                    >
+                      Delete Card
+                    </button>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   {!isEditing ? (
-                    <button onClick={() => setIsEditing(true)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300">
-                      Edit
-                    </button>
+                    canEdit && (
+                      <button onClick={() => setIsEditing(true)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300">
+                        Edit
+                      </button>
+                    )
                   ) : (
                     <>
                       <button onClick={() => {

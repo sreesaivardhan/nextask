@@ -14,8 +14,12 @@ boardRouter.get('/:boardId', boardController.getBoardById);
 boardRouter.patch('/:boardId', boardController.updateBoard);
 boardRouter.delete('/:boardId', boardController.deleteBoard);
 
-// Board members (for assignee dropdown)
+// Board members
 boardRouter.get('/:boardId/members', boardMemberController.getMembers);
+boardRouter.post('/:boardId/members', boardMemberController.addMember);
+boardRouter.patch('/:boardId/members/:userId', boardMemberController.updateRole);
+boardRouter.delete('/:boardId/members/:userId', boardMemberController.removeMember);
+boardRouter.post('/:boardId/leave', boardMemberController.leaveBoard);
 
 // Mount column router under boards
 boardRouter.use('/:boardId/columns', columnRouter);

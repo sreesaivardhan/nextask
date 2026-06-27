@@ -42,6 +42,31 @@ export class UserRepository {
       data: { displayName },
     });
   }
+
+  async searchUsers(query: string, excludeUserIds: string[]): Promise<Partial<User>[]> {
+    return prisma.user.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { displayName: { contains: query, mode: 'insensitive' } },
+              { email: { contains: query, mode: 'insensitive' } }
+            ]
+          },
+          {
+            id: { notIn: excludeUserIds }
+          }
+        ]
+      },
+      take: 10,
+      select: {
+        id: true,
+        displayName: true,
+        email: true,
+        authProvider: true
+      }
+    });
+  }
 }
 
 export const userRepository = new UserRepository();
