@@ -6,7 +6,7 @@ import { boardMemberRepository } from '../repositories/boardMember.repository';
 import { userRepository } from '../repositories/user.repository';
 import { Card, ComplexityStatus } from '@prisma/client';
 import { authzService } from './authorization.service';
-import { inferCardComplexity } from './ai.service';
+import { inferCardComplexity, invalidateHistoricalState, invalidateBoardInsights } from './ai.service';
 
 export class CardService {
   async getCards(boardId: string, userId: string): Promise<Card[]> {
@@ -68,6 +68,9 @@ export class CardService {
 
     // Asynchronously trigger AI complexity inference (fire-and-forget)
     inferCardComplexity(card.id).catch(console.error);
+    
+    // Invalidate deadline prediction insights
+    invalidateBoardInsights(card.boardId).catch(console.error);
 
     return card;
   }
@@ -155,21 +158,49 @@ export class CardService {
 
       await activityLogService.log(card.boardId, userId, 'CARD_UPDATED', 'Card', card.id);
 
-      // Trigger AI inference if description changed
-      if (data.description !== undefined && data.description !== card.description) {
-        inferCardComplexity(card.id).catch(console.error);
-      }
-
-      // Log AI override/accept
+      let historicalEligibilityChanged = false;
       if (data.complexityStatus === 'ACCEPTED' && card.complexityStatus !== 'ACCEPTED') {
         await activityLogService.log(card.boardId, userId, 'AI_COMPLEXITY_ACCEPTED', 'Card', card.id, {
           title: 'Accepted AI complexity suggestion.'
         });
+        historicalEligibilityChanged = true;
       }
       if (data.complexityStatus === 'OVERRIDDEN') {
         await activityLogService.log(card.boardId, userId, 'AI_COMPLEXITY_OVERRIDDEN', 'Card', card.id, {
           title: `Overrode AI complexity from ${card.suggestedSp ?? 'Unknown'} SP to ${data.complexity} SP.`
         });
+        historicalEligibilityChanged = true;
+      }
+      
+      if (data.complexity !== undefined && data.complexity !== card.complexity) {
+        historicalEligibilityChanged = true;
+      }
+
+      // Trigger AI inference if description changed
+      if (data.description !== undefined && data.description !== card.description) {
+        historicalEligibilityChanged = true;
+        inferCardComplexity(card.id).catch(console.error);
+      }
+
+      if (data.title !== undefined && data.title !== card.title) {
+        historicalEligibilityChanged = true;
+      }
+
+      if (historicalEligibilityChanged) {
+        let reason = 'update';
+        if (data.complexityStatus === 'ACCEPTED') reason = 'accept';
+        if (data.complexityStatus === 'OVERRIDDEN') reason = 'override';
+        invalidateHistoricalState(card.boardId, undefined, reason).catch(console.error);
+      }
+
+      const insightsInvalidated = (
+        (data.title !== undefined && data.title !== card.title) ||
+        (data.complexity !== undefined && data.complexity !== card.complexity) ||
+        (data.assigneeId !== undefined && data.assigneeId !== card.assigneeId)
+      );
+
+      if (insightsInvalidated) {
+        invalidateBoardInsights(card.boardId).catch(console.error);
       }
 
       return updatedCard;
@@ -212,6 +243,11 @@ export class CardService {
         toColumn: data.columnId,
       });
 
+      if (data.columnId !== card.columnId) {
+        invalidateHistoricalState(card.boardId, undefined, 'move').catch(console.error);
+        invalidateBoardInsights(card.boardId).catch(console.error);
+      }
+
       return updatedCard;
     } catch (error: unknown) {
       const err = error as { code?: string };
@@ -232,6 +268,9 @@ export class CardService {
 
     await cardRepository.delete(cardId);
     await activityLogService.log(card.boardId, userId, 'CARD_DELETED', 'Card', card.id, { title: card.title });
+    
+    invalidateHistoricalState(card.boardId, card.id, 'delete').catch(console.error);
+    invalidateBoardInsights(card.boardId).catch(console.error);
   }
 
   /** Lightweight helper to fetch boardId/columnId for socket broadcast before deletion. */

@@ -5,20 +5,24 @@ import { boardService } from './board.service';
 // Force IDE cache reload
 const prisma = new PrismaClient();
 
-export async function analyzeBoards(): Promise<void> {
-  console.log('[AI] Scheduler started');
+export async function analyzeBoards(targetBoardId?: string): Promise<void> {
+  console.log(targetBoardId ? `[AI] Targeted analysis for board ${targetBoardId}` : '[AI] Scheduler started');
   console.log('[AI] Starting analysis');
   const start = Date.now();
 
-  // Obtain the active board list using the exact same backend path as the dashboard.
-  // The dashboard shows boards per user via GET /api/boards (which calls boardService.getBoards).
-  const users = await prisma.user.findMany();
   const activeBoardIds = new Set<string>();
 
-  for (const user of users) {
-    const userBoards = await boardService.getBoards(user.id);
-    for (const b of userBoards) {
-      activeBoardIds.add(b.id);
+  if (targetBoardId) {
+    activeBoardIds.add(targetBoardId);
+  } else {
+    // Obtain the active board list using the exact same backend path as the dashboard.
+    // The dashboard shows boards per user via GET /api/boards (which calls boardService.getBoards).
+    const users = await prisma.user.findMany();
+    for (const user of users) {
+      const userBoards = await boardService.getBoards(user.id);
+      for (const b of userBoards) {
+        activeBoardIds.add(b.id);
+      }
     }
   }
 
@@ -83,13 +87,95 @@ export async function analyzeBoards(): Promise<void> {
         const severityPercent = Math.min(100, Math.max(0, Math.round(score * 100)));
         const type = 'BOTTLENECK';
         const title = `Bottleneck detected in ${maxColumn.name}`;
-        const summary = `Cards are accumulating faster than they leave.`;
+        
+        let unassignedCount = 0;
+        let totalComplexity = 0;
+        let complexityCount = 0;
+        const assigneeCounts = new Map<string, number>();
+        const categoryWords = new Map<string, number>();
+        
+        for (const card of maxColumn.cards) {
+            if (!card.assigneeId) unassignedCount++;
+            else assigneeCounts.set(card.assigneeId, (assigneeCounts.get(card.assigneeId) || 0) + 1);
+            
+            if (card.complexity) {
+                totalComplexity += card.complexity;
+                complexityCount++;
+            }
+            
+            const words = (card.title + ' ' + (card.description||'')).toLowerCase().split(/\W+/).filter(w => w.length > 4);
+            for (const w of words) {
+                if (['auth', 'backend', 'frontend', 'database', 'api', 'ui', 'css', 'design', 'testing', 'bug', 'server', 'client', 'oauth'].includes(w)) {
+                    categoryWords.set(w, (categoryWords.get(w)||0) + 1);
+                }
+            }
+        }
+
+        const avgComplexity = complexityCount > 0 ? (totalComplexity / complexityCount).toFixed(1) : 'unknown';
+        
+        let overloadedAssignee = null;
+        for (const [assigneeId, count] of assigneeCounts.entries()) {
+            if (count > maxCount * 0.4 && count > 1) overloadedAssignee = assigneeId;
+        }
+
+        let topCategory = null;
+        let topCatCount = 0;
+        for (const [cat, count] of categoryWords.entries()) {
+             if (count > topCatCount) {
+                 topCatCount = count;
+                 topCategory = cat;
+             }
+        }
+
+        const today = new Date();
+        const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        let arrivedLast7Days = 0;
+        let completedLast7Days = 0;
+        for (const col of board.columns) {
+            for (const card of col.cards) {
+                if (new Date(card.createdAt) > sevenDaysAgo) arrivedLast7Days++;
+                if (completionNames.includes(col.name.trim().toLowerCase())) {
+                    if (new Date(card.updatedAt) > sevenDaysAgo) completedLast7Days++;
+                }
+            }
+        }
+        const arrivalRate = (arrivedLast7Days / 7).toFixed(1);
+        const completionRate = (completedLast7Days / 7).toFixed(1);
+
+        const causes: string[] = [];
+        if (topCategory && topCatCount >= 2) {
+             causes.push(`Many tasks are related to high-effort '${topCategory}' work.`);
+        }
+        if (unassignedCount > 0) {
+            causes.push(`${unassignedCount} task(s) remain unassigned.`);
+        }
+        if (overloadedAssignee) {
+            causes.push(`A single team member owns a large portion of the tasks in this column.`);
+        }
+        if (complexityCount > 0 && (totalComplexity / complexityCount) >= 5) {
+            causes.push(`Average estimated complexity is high (${avgComplexity} SP).`);
+        }
+        if (arrivedLast7Days > completedLast7Days * 2) {
+            causes.push(`Tasks are arriving much faster (${arrivalRate}/day) than they are being completed (${completionRate}/day).`);
+        }
+        
+        const likelyCauseText = causes.length > 0 
+           ? causes.join(' ') 
+           : 'Tasks are accumulating without clear assignment or complexity issues. Check if there are external blockers.';
+
+        const summary = `Column: ${maxColumn.name}\nCards: ${maxCount}\nArrival Rate: ${arrivalRate}/day\nCompletion Rate: ${completionRate}/day\n\nLikely Cause:\n${likelyCauseText}\n\nRecommendation:\nRedistribute work or reduce WIP before adding more tasks.`;
+
         const data = {
           column: maxColumn.name,
           score,
           severityPercent,
-          reason: 'Cards are accumulating faster than they leave.',
+          reason: summary,
           cardCount: maxCount,
+          unassignedCount,
+          avgComplexity,
+          likelyCause: likelyCauseText,
+          arrivalRate,
+          completionRate
         };
 
         const latestBottleneck = await prisma.aIInsight.findFirst({
@@ -101,7 +187,6 @@ export async function analyzeBoards(): Promise<void> {
         
         const isIdentical = Boolean(
           latestBottleneck &&
-          latestBottleneck.title === title &&
           latestBottleneck.summary === summary &&
           latestData &&
           latestData.column === data.column &&
@@ -244,6 +329,27 @@ export async function analyzeBoards(): Promise<void> {
     } else if (totalCards === 0) {
       console.log('[AI] Task Deadline: Skipped (no cards)');
     } else {
+      // Clean up insights for cards that have been deleted
+      const existingDeadlineInsights = await prisma.aIInsight.findMany({
+        where: { boardId: board.id, type: 'TASK_DEADLINE' }
+      });
+      const activeCardIds = new Set<string>();
+      for (const col of board.columns) {
+        for (const card of col.cards) {
+          activeCardIds.add(card.id);
+        }
+      }
+      for (const insight of existingDeadlineInsights) {
+        const data = insight.data as Record<string, unknown>;
+        const taskId = data?.taskId as string;
+        if (taskId && !activeCardIds.has(taskId)) {
+          console.log(`[AI] Cleaning up obsolete insight for deleted card: ${taskId}`);
+          await prisma.aIInsight.delete({ where: { id: insight.id } });
+          const io = getIO();
+          if (io) io.to(board.id).emit('ai:insight:removed', { insightId: insight.id, boardId: board.id });
+        }
+      }
+
       const completionNames = ['done', 'completed', 'finished', 'resolved', 'closed'];
       const sprintEnd = new Date(board.sprintEndDate);
       const today = new Date();
@@ -586,18 +692,21 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
     let historicalMatchPoints = 0;
     let historicalCount = 0;
     let avgHistorical = 0;
+    let bestSimilarity = 0;
     
+    const matches: { card: { id: string, title: string, description: string | null, complexity: number | null }, similarity: number }[] = [];
+
     if (doneColumnIds.length > 0) {
       const completedCards = await prisma.card.findMany({
         where: {
           boardId: card.boardId,
           columnId: { in: doneColumnIds },
           id: { not: card.id },
-          complexity: { not: null } // must have SP
+          complexity: { not: null },
+          complexityStatus: { in: ['ACCEPTED', 'OVERRIDDEN'] }
         }
       });
 
-      // Simple Jaccard similarity for words > 4 chars
       const extractWords = (text: string) => {
         return new Set(
           text.toLowerCase().split(/\W+/)
@@ -605,28 +714,55 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
         );
       };
 
-      const currentWords = extractWords(fullText);
+      const getSimilarity = (text1: string, text2: string): number => {
+        if (!text1 && !text2) return 1.0;
+        if (!text1 || !text2) return 0.0;
+        const words1 = extractWords(text1);
+        const words2 = extractWords(text2);
+        if (words1.size === 0 && words2.size === 0) return 1.0;
+        if (words1.size === 0 || words2.size === 0) return 0.0;
+        const intersection = new Set([...words1].filter(x => words2.has(x)));
+        const union = new Set([...words1, ...words2]);
+        return intersection.size / union.size;
+      };
 
       for (const compCard of completedCards) {
         if (!compCard.complexity) continue;
-        const compWords = extractWords(`${compCard.title} ${compCard.description || ''}`);
         
-        const intersection = new Set([...currentWords].filter(x => compWords.has(x)));
-        const union = new Set([...currentWords, ...compWords]);
+        const titleSim = getSimilarity(title, compCard.title || '');
+        let descSim = 0;
+        let weightTitle = 0.7;
+        let weightDesc = 0.3;
+
+        // If description is empty for both new and completed card, match solely on title
+        if (!description && !compCard.description) {
+           weightTitle = 1.0;
+           weightDesc = 0.0;
+        } else {
+           descSim = getSimilarity(description, compCard.description || '');
+        }
+
+        const similarity = (titleSim * weightTitle) + (descSim * weightDesc);
         
-        if (union.size === 0) continue;
-        const similarity = intersection.size / union.size;
-        
-        // If similarity is > 15%, consider it a match
-        if (similarity > 0.15) {
-          historicalMatchPoints += compCard.complexity;
-          historicalCount++;
+        // If similarity is > 20%, consider it a match
+        if (similarity > 0.20) {
+          matches.push({ card: compCard, similarity });
         }
       }
 
-      if (historicalCount > 0) {
+      matches.sort((a, b) => b.similarity - a.similarity);
+
+      if (matches.length > 0) {
+        bestSimilarity = matches[0].similarity;
+        for (const match of matches) {
+           historicalMatchPoints += match.card.complexity!;
+           historicalCount++;
+        }
         avgHistorical = Math.round(historicalMatchPoints / historicalCount);
-        signalsMatched += 2; // boosts confidence
+        
+        if (bestSimilarity > 0.8) signalsMatched += 4;
+        else if (bestSimilarity > 0.5) signalsMatched += 3;
+        else signalsMatched += 2;
       }
     }
 
@@ -647,17 +783,37 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
        suggestedSp = fib.reduce((prev, curr) => 
          Math.abs(curr - blended) < Math.abs(prev - blended) ? curr : prev
        );
-       reasons.push(`Found ${historicalCount} similar completed card(s) averaging ${avgHistorical} SP. (Blended base ${baseSp} SP with historical)`);
+       
+       reasons.push('Historical Reference ✔ Similar completed task(s) found');
+       matches.forEach(m => {
+          reasons.push(`Task: ${m.card.title} (Similarity: ${Math.round(m.similarity * 100)}%) → ${m.card.complexity} SP`);
+       });
+       if (matches.length > 1) {
+          reasons.push(`Average Historical Complexity: ${avgHistorical} SP`);
+       }
+       reasons.push(`Used as historical evidence for this estimate.`);
     }
 
     // Calculate Confidence
-    let confidence = 50; // base confidence
+    let confidence = 45; // base confidence
     if (signalsMatched > 0) confidence += signalsMatched * 10;
     if (descLength > 500) confidence += 10;
-    if (descLength < 50) confidence -= 20; // ambiguous
-    if (signalsMatched === 0 && descLength < 100) confidence = 20;
+    if (descLength < 50) confidence -= 10; // ambiguous
+
+    if (historicalCount > 0) {
+       const strongMatches = matches.filter(m => m.similarity > 0.6);
+       if (strongMatches.length > 1) {
+           confidence = 95;
+       } else if (strongMatches.length === 1 || bestSimilarity > 0.5) {
+           confidence = Math.max(confidence, 75);
+       } else {
+           confidence = Math.max(confidence, 60);
+       }
+    } else {
+       if (signalsMatched === 0 && descLength < 100) confidence = 20;
+    }
     
-    confidence = Math.max(0, Math.min(100, confidence));
+    confidence = Math.max(0, Math.min(95, confidence));
 
     if (reasons.length === 0) {
       reasons.push('Limited context provided. Assigned base complexity.');
@@ -685,10 +841,6 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
         suggestedSp,
         spConfidence: confidence,
         spReasons: reasons,
-        // Only update status to PENDING if it wasn't ACCEPTED/OVERRIDDEN, 
-        // OR if the AI recommendation is completely new.
-        // The assignment doesn't explicitly state whether to reset status on re-inference. 
-        // We will reset to PENDING so the user sees there is a new suggestion.
         complexityStatus: 'PENDING',
         version: { increment: 1 }
       },
@@ -708,5 +860,68 @@ export async function inferCardComplexity(cardId: string): Promise<void> {
     }
   } catch (error) {
     console.error(`[AI] Error inferring card complexity:`, error);
+  }
+}
+
+/**
+ * Invalidates historical state for a board and recalculates complexity for affected cards.
+ * Triggered when a historical card is deleted, moved, or its complexity is accepted/overridden.
+ */
+export async function invalidateHistoricalState(boardId: string, triggerCardId?: string, reason?: string): Promise<void> {
+  try {
+    console.log(`\n========================================`);
+    console.log(`[AI] invalidate triggered by ${reason || 'unknown'}`);
+    console.log(`Board: ${boardId}`);
+    console.log(`Card: ${triggerCardId || 'none'}`);
+
+    // Fetch done columns to count eligible historical cards for debugging
+    const board = await prisma.board.findUnique({
+      where: { id: boardId },
+      include: { columns: true }
+    });
+    const doneColumnIds = board?.columns
+      .filter(c => c.name.toLowerCase().includes('done') || c.name.toLowerCase().includes('complete'))
+      .map(c => c.id) || [];
+      
+    const eligibleCount = await prisma.card.count({
+      where: {
+        boardId,
+        columnId: { in: doneColumnIds },
+        ...(triggerCardId ? { id: { not: triggerCardId } } : {}),
+        complexity: { not: null },
+        complexityStatus: { in: ['ACCEPTED', 'OVERRIDDEN'] }
+      }
+    });
+    console.log(`Eligible historical cards: ${eligibleCount}`);
+
+    const pendingCards = await prisma.card.findMany({
+      where: {
+        boardId,
+        complexityStatus: 'PENDING',
+        ...(triggerCardId ? { id: { not: triggerCardId } } : {})
+      }
+    });
+
+    console.log(`Pending cards recalculated: ${pendingCards.length}`);
+    console.log(`========================================\n`);
+
+    for (const card of pendingCards) {
+      await inferCardComplexity(card.id).catch(console.error);
+    }
+  } catch (error) {
+    console.error('[AI] Error in invalidateHistoricalState:', error);
+  }
+}
+
+/**
+ * Event-driven AI board insights invalidation.
+ * Recalculates deadline prediction and sprint risk when a board state changes.
+ */
+export async function invalidateBoardInsights(boardId: string): Promise<void> {
+  try {
+    console.log(`[AI] Invalidating and recalculating insights for board ${boardId}`);
+    await analyzeBoards(boardId);
+  } catch (err) {
+    console.error(`[AI] Error invalidating board insights for ${boardId}:`, err);
   }
 }

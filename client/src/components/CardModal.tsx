@@ -70,28 +70,37 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
   }, [isOpen, card?.id]);
 
   // Synchronize AI fields when the store receives a newer version from sockets
+  const latestCardFromStore = useCardStore(state => {
+    if (!card) return null;
+    for (const col of Object.values(state.cards)) {
+      const found = col.find(c => c.id === card.id);
+      if (found) return found;
+    }
+    return null;
+  });
+
   useEffect(() => {
-    if (isOpen && card) {
+    if (isOpen && latestCardFromStore) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSnapshotCard(prev => {
-        if (!prev || prev.id !== card.id) return prev;
+        if (!prev || prev.id !== latestCardFromStore.id) return prev;
         
         // If the incoming card has a higher version...
-        if (card.version > prev.version) {
+        if (latestCardFromStore.version > prev.version) {
           
           // Determine if this update was purely from the AI.
           // The AI only updates suggestedSp, spConfidence, spReasons, complexityStatus, and bumps version.
           // It does NOT touch title, description, complexity, or assigneeId.
           const isAIUpdate = 
-            card.title === prev.title && 
-            card.description === prev.description && 
-            card.complexity === prev.complexity && 
-            card.assigneeId === prev.assigneeId;
+            latestCardFromStore.title === prev.title && 
+            latestCardFromStore.description === prev.description && 
+            latestCardFromStore.complexity === prev.complexity && 
+            latestCardFromStore.assigneeId === prev.assigneeId;
 
           if (isAIUpdate) {
             // It's safe to silently absorb the new version because no user edits were made.
             // This prevents a 409 Conflict when we save our own ongoing description edits.
-            return card;
+            return latestCardFromStore;
           }
           
           // If a USER made the update (e.g. title changed), we DO NOT update snapshotCard.
@@ -101,7 +110,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
         return prev;
       });
     }
-  }, [card, isOpen]);
+  }, [latestCardFromStore, isOpen]);
 
   if (!isOpen || !snapshotCard || !card) return null;
 

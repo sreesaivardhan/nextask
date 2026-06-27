@@ -13,7 +13,7 @@
 | Last-write-wins Conflict Handling                          | ✅      |
 | Conflict Notification                                      | ✅      |
 | Multi-user Board Collaboration (Invites/Board Members)     | ✅      |
-| **Task Complexity Inference**                              | ❌      |
+| Task Complexity Inference                                  | ✅      |
 | **GitHub Issues Import**                                   | ❌      |
 | **Chrome Extension**                                       | ❌      |
 | **Weekly Digest**                                          | ❌      |
@@ -23,6 +23,7 @@
 | **Google OAuth**                                           | ❌      |
 | **GitHub OAuth**                                           | ❌      |
 | **Railway Deployment**                                     | ❌      |
+| **10 simultaneous users Documentation**                    | ❌      |
 | **README**                                                 | ❌      |
 | **Demo Video**                                             | ❌      |
 
