@@ -38,6 +38,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
 
   const [newComment, setNewComment] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [conflictError, setConflictError] = useState<{ message: string; latestCard: Card | null } | null>(null);
 
   const [snapshotCard, setSnapshotCard] = useState<Card | null>(null);
 
@@ -56,6 +57,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
       setActiveTab('details');
       setNewComment('');
       setShowDeleteConfirm(false);
+      setConflictError(null);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -96,8 +98,22 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
       addToast('Card updated', 'success');
       fetchActivity(snapshotCard.id, snapshotCard.boardId);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } }; message: string };
-      addToast(error.response?.data?.error || error.message, 'error');
+      const error = err as { response?: { status?: number, data?: { error?: string } }; message: string };
+      const errorMessage = error.response?.data?.error || error.message;
+      if (error.response?.status === 409 || errorMessage.includes('Version conflict')) {
+        const allCards = useCardStore.getState().cards;
+        let latestCard: Card | null = null;
+        for (const col of Object.values(allCards)) {
+          const found = col.find(c => c.id === snapshotCard.id);
+          if (found) { latestCard = found; break; }
+        }
+        setConflictError({
+          message: "This card was updated by another user while you were editing.",
+          latestCard
+        });
+      } else {
+        addToast(errorMessage, 'error');
+      }
     }
   };
 
@@ -411,6 +427,59 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
         </div>
       </div>
       
+      {conflictError && (
+        <div className="fixed inset-0 bg-white/90 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-white border shadow-2xl rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-red-600 mb-2 flex items-center gap-2">
+              <span>⚠️</span> Version Conflict
+            </h3>
+            <p className="text-gray-700 mb-4">{conflictError.message}</p>
+            
+            <div className="bg-gray-50 border rounded p-3 mb-4 text-sm font-mono space-y-2">
+              <div>Your version: v{snapshotCard.version}</div>
+              <div>Latest version: v{conflictError.latestCard?.version || '?'}</div>
+              {snapshotCard.updatedAt && <div>Your timestamp: {new Date(snapshotCard.updatedAt).toLocaleString()}</div>}
+              {conflictError.latestCard?.updatedAt && <div>Latest timestamp: {new Date(conflictError.latestCard.updatedAt).toLocaleString()}</div>}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => {
+                  if (conflictError.latestCard) {
+                    setSnapshotCard(conflictError.latestCard);
+                    setEditTitle(conflictError.latestCard.title);
+                    setEditDesc(conflictError.latestCard.description || '');
+                    setEditComplexity(conflictError.latestCard.complexity || '');
+                    setEditAssignee(conflictError.latestCard.assigneeId || '');
+                  }
+                  setConflictError(null);
+                }}
+                className="bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 w-full"
+              >
+                Reload Latest Version
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `Title: ${editTitle}\n\nDescription:\n${editDesc}`
+                  );
+                  addToast("Copied unsaved changes to clipboard", "success");
+                }}
+                className="bg-gray-100 text-gray-800 py-2 rounded font-medium hover:bg-gray-200 border w-full"
+              >
+                Copy My Unsaved Changes
+              </button>
+              <button 
+                onClick={() => setConflictError(null)}
+                className="text-gray-500 hover:text-gray-700 py-2 text-sm font-medium w-full mt-2"
+              >
+                Continue Editing (Discard Warning)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         title="Delete Card"

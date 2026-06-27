@@ -13,6 +13,7 @@ export interface AIInsight {
 
 interface InsightStore {
   insights: Record<string, AIInsight[]>;
+  isLoading: Record<string, boolean>;
   fetchInsights: (boardId: string) => Promise<void>;
   socketAddInsight: (insight: AIInsight) => void;
   socketRemoveInsight: (insightId: string, boardId: string) => void;
@@ -20,7 +21,9 @@ interface InsightStore {
 
 export const useInsightStore = create<InsightStore>((set) => ({
   insights: {},
+  isLoading: {},
   fetchInsights: async (boardId: string) => {
+    set((state) => ({ isLoading: { ...state.isLoading, [boardId]: true } }));
     try {
       const data = await api.get(`/boards/${boardId}/ai-insights`);
       
@@ -42,9 +45,11 @@ export const useInsightStore = create<InsightStore>((set) => ({
 
       set((state) => ({
         insights: { ...state.insights, [boardId]: Array.from(latestByKey.values()) },
+        isLoading: { ...state.isLoading, [boardId]: false },
       }));
     } catch (error) {
       console.error('Failed to fetch AI insights:', error);
+      set((state) => ({ isLoading: { ...state.isLoading, [boardId]: false } }));
     }
   },
   socketAddInsight: (insight: AIInsight) => {

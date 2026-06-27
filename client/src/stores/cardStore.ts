@@ -12,6 +12,7 @@ export interface Card {
   version: number;
   position: number;
   createdAt: string;
+  updatedAt: string;
 }
 
 interface CardStore {
