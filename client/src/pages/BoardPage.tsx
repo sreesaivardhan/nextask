@@ -12,6 +12,7 @@ import { CardModal } from '../components/CardModal';
 import { AIInsightsPanel } from '../components/AIInsightsPanel';
 import { GitHubImportModal } from '../components/GitHubImportModal';
 import { ShareModal } from '../components/ShareModal';
+import { WeeklyDigestModal } from '../components/WeeklyDigestModal';
 import { useBoardMemberStore } from '../stores/boardMemberStore';
 import { socketService } from '../services/socketService';
 import { useSessionStore } from '../stores/sessionStore';
@@ -67,6 +68,7 @@ export function BoardPage(): React.ReactElement {
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
+  const [isDigestModalOpen, setIsDigestModalOpen] = useState(false);
 
   const board = boards.find((b) => b.id === boardId);
   const boardMembers = boardId ? boardMemberMap[boardId] || [] : [];
@@ -578,6 +580,12 @@ export function BoardPage(): React.ReactElement {
               Share
             </button>
           )}
+          <button
+            onClick={() => setIsDigestModalOpen(true)}
+            className="bg-purple-100 text-purple-700 px-4 py-1.5 rounded font-medium text-sm hover:bg-purple-200 flex items-center gap-2"
+          >
+            📊 Weekly Digest
+          </button>
           {(currentUserRole === 'OWNER' || currentUserRole === 'ADMIN') && (
             <button
               onClick={() => setIsGitHubModalOpen(true)}
@@ -699,6 +707,14 @@ export function BoardPage(): React.ReactElement {
           boardId={boardId}
           isOpen={isGitHubModalOpen}
           onClose={() => setIsGitHubModalOpen(false)}
+        />
+      )}
+      {boardId && (
+        <WeeklyDigestModal
+          boardId={boardId}
+          isOpen={isDigestModalOpen}
+          onClose={() => setIsDigestModalOpen(false)}
+          canGenerate={canManageBoard || canManageMembers}
         />
       )}
       <ConfirmDialog

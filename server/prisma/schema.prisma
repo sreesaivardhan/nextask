@@ -102,6 +102,7 @@ model Board {
   labels       Label[]
   activityLogs ActivityLog[]
   aiInsights   AIInsight[]
+  weeklyDigests WeeklyDigest[]
 
   @@index([ownerId])
 }
@@ -241,4 +242,31 @@ model AIInsight {
 
   @@index([boardId, type])
   @@index([createdAt])
+}
+
+model WeeklyDigest {
+  id              String   @id @default(cuid())
+  boardId         String
+  generatedAt     DateTime @default(now())
+  periodStart     DateTime
+  periodEnd       DateTime
+  
+  cardsCreated    Int
+  cardsCompleted  Int
+  currentVelocity Float
+  velocityTrend   String
+  currentWIP      Int
+  
+  topBottleneck   Json?
+  riskSummary     Json?
+  recommendations Json?
+  rawMetrics      Json?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  board           Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@index([generatedAt])
 }

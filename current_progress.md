@@ -16,8 +16,8 @@
 | Multi-user Board Collaboration (Invites/Board Members)     | ✅      |
 | Task Complexity Inference                                  | ✅      |
 | GitHub Issues Import                                       | ✅      |
-| **Chrome Extension**                                       | ❌      |
-| **Weekly Digest**                                          | ❌      |
+| Chrome Extension                                           | ✅      |
+| Weekly Digest                                              | ✅      |
 | **Team View**                                              | ❌      |
 | **Dashboard Analytics**                                    | ❌      |
 | **Google OAuth**                                           | ❌      |
