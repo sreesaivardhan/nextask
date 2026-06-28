@@ -1,3 +1,4 @@
+import { Sparkles , AlertTriangle } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { type Card, useCardStore } from '../stores/cardStore';
 import { useCommentStore } from '../stores/commentStore';
@@ -229,17 +230,17 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
-        <div className="bg-white rounded shadow-xl w-full max-w-2xl max-h-full flex flex-col overflow-hidden">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40 p-4">
+        <div className="bg-surface rounded-xl shadow-floating w-full max-w-2xl max-h-full flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b flex justify-between items-start bg-gray-50">
+          <div className="px-6 py-4 border-b flex justify-between items-start bg-background">
             <div className="flex-1 min-w-0 pr-4">
               {!isEditing ? (
-                <h2 className="text-xl font-bold text-gray-800 break-words whitespace-normal">{snapshotCard.title}</h2>
+                <h2 className="text-xl font-bold text-primary break-words whitespace-normal">{snapshotCard.title}</h2>
               ) : (
                 <input
                   type="text"
-                  className="w-full border p-2 rounded text-xl font-bold"
+                  className="w-full border p-2 rounded-xl text-xl font-bold"
                   value={editTitle}
                   onChange={(e) => {
                     setEditTitle(e.target.value);
@@ -254,27 +255,27 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                   maxLength={200}
                 />
               )}
-              <div className="text-xs text-gray-400 mt-2">v{snapshotCard.version} • Created {new Date(snapshotCard.createdAt).toLocaleString()}</div>
+              <div className="text-xs text-muted mt-2">v{snapshotCard.version} • Created {new Date(snapshotCard.createdAt).toLocaleString()}</div>
             </div>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl leading-none shrink-0">&times;</button>
+            <button onClick={onClose} className="text-muted hover:text-primary text-2xl leading-none shrink-0">&times;</button>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b px-6 bg-white">
+          <div className="flex border-b px-6 bg-surface">
             <button
-              className={`py-3 px-4 font-medium border-b-2 ${activeTab === 'details' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`py-3 px-4 font-medium border-b-2 ${activeTab === 'details' ? 'border-primary text-primary-accent' : 'border-transparent text-muted hover:text-secondary'}`}
               onClick={() => setActiveTab('details')}
             >
               Details
             </button>
             <button
-              className={`py-3 px-4 font-medium border-b-2 flex items-center gap-2 ${activeTab === 'comments' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`py-3 px-4 font-medium border-b-2 flex items-center gap-2 ${activeTab === 'comments' ? 'border-primary text-primary-accent' : 'border-transparent text-muted hover:text-secondary'}`}
               onClick={() => setActiveTab('comments')}
             >
-              Comments <span className="bg-gray-200 text-gray-600 text-xs py-0.5 px-2 rounded-full">{cardComments.length}</span>
+              Comments <span className="bg-elevated text-secondary text-xs py-0.5 px-2 rounded-full">{cardComments.length}</span>
             </button>
             <button
-              className={`py-3 px-4 font-medium border-b-2 ${activeTab === 'history' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`py-3 px-4 font-medium border-b-2 ${activeTab === 'history' ? 'border-primary text-primary-accent' : 'border-transparent text-muted hover:text-secondary'}`}
               onClick={() => setActiveTab('history')}
             >
               History
@@ -282,44 +283,44 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 bg-white min-h-[300px]">
+          <div className="flex-1 overflow-y-auto p-6 bg-surface min-h-[300px]">
             {activeTab === 'details' && (
               <div className="flex flex-col gap-4">
                 {!isEditing ? (
                   <>
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-4 bg-gray-50 p-4 rounded border">
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-4 bg-background p-4 rounded-xl border">
                       <div>
-                        <span className="text-gray-500 block mb-1">Assignee</span>
-                        <span className="font-medium text-gray-800">
+                        <span className="text-muted block mb-1">Assignee</span>
+                        <span className="font-medium text-primary">
                           {snapshotCard.assigneeId
                             ? (boardMembers.find((m) => m.userId === snapshotCard.assigneeId)?.user.displayName ?? snapshotCard.assigneeId)
                             : 'Unassigned'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500 block mb-1">Complexity</span>
-                        <span className="font-medium text-gray-800">{snapshotCard.complexity || 'Unestimated'}</span>
+                        <span className="text-muted block mb-1">Complexity</span>
+                        <span className="font-medium text-primary">{snapshotCard.complexity || 'Unestimated'}</span>
                       </div>
                     </div>
                     
                     {/* AI Complexity Section */}
                     {card.suggestedSp !== null && (
-                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-lg p-4 mb-4 shadow-sm">
+                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-primary rounded-2xl p-4 mb-4 shadow-subtle">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-purple-600 font-bold">✨ AI Complexity Inference</span>
+                            <span className="text-primary-accent font-bold"><Sparkles className="w-4 h-4 inline-block mr-1 text-primary-accent" /> AI Complexity Inference</span>
                             {card.complexityStatus === 'ACCEPTED' && (
-                              <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full border border-green-200">
+                              <span className="bg-status-success/5 text-status-success border border-status-success/10 text-xs font-bold px-2 py-0.5 rounded-full border border-status-success">
                                 ACCEPTED
                               </span>
                             )}
                             {card.complexityStatus === 'OVERRIDDEN' && (
-                              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                              <span className="bg-elevated text-primary border border text-xs font-bold px-2 py-0.5 rounded-full border border-primary/30">
                                 OVERRIDDEN
                               </span>
                             )}
                             {card.complexityStatus === 'PENDING' && (
-                              <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full border border-orange-200">
+                              <span className="bg-status-warning/5 text-status-warning border border-status-warning/10 text-xs font-bold px-2 py-0.5 rounded-full border border-status-warning">
                                 PENDING
                               </span>
                             )}
@@ -327,23 +328,23 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                           {canEdit && (
                             <div className="flex gap-2 relative">
                               {card.complexityStatus !== 'ACCEPTED' && (
-                                <button onClick={handleAcceptAI} className="bg-purple-600 text-white text-xs font-medium px-3 py-1.5 rounded shadow hover:bg-purple-700 transition-colors">
+                                <button onClick={handleAcceptAI} className="bg-primary text-inverse text-xs font-medium px-3 py-1.5 rounded-xl shadow hover:bg-primary transition-colors">
                                   Accept {card.suggestedSp} SP
                                 </button>
                               )}
                               <button 
                                 onClick={() => setShowOverrideDropdown(!showOverrideDropdown)}
-                                className="bg-white text-purple-700 border border-purple-200 text-xs font-medium px-3 py-1.5 rounded shadow hover:bg-purple-50 transition-colors"
+                                className="bg-surface text-primary-accent border border-primary text-xs font-medium px-3 py-1.5 rounded-xl shadow hover:bg-surface transition-colors"
                               >
                                 Override
                               </button>
                               {showOverrideDropdown && (
-                                <div className="absolute top-full right-0 mt-1 bg-white border rounded shadow-lg z-10 min-w-[120px] py-1">
+                                <div className="absolute top-full right-0 mt-1 bg-surface border rounded-xl shadow-floating border border-strong z-10 min-w-[120px] py-1">
                                   {[1, 2, 3, 5, 8, 13].map((sp) => (
                                     <button 
                                       key={sp}
                                       onClick={() => handleOverrideAI(sp)}
-                                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                                      className="block w-full text-left px-4 py-2 text-sm text-secondary hover:bg-surface hover:text-primary-accent"
                                     >
                                       {sp} SP
                                     </button>
@@ -354,20 +355,20 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                           )}
                         </div>
                         <div className="grid grid-cols-2 gap-4 mb-3">
-                          <div className="bg-white/60 p-3 rounded border border-purple-100 flex items-center justify-between">
-                            <span className="text-gray-600 text-sm">Suggested</span>
-                            <span className="text-xl font-black text-purple-700">{card.suggestedSp} <span className="text-sm font-normal text-purple-600">SP</span></span>
+                          <div className="bg-surface/60 p-3 rounded-xl border border-primary flex items-center justify-between">
+                            <span className="text-secondary text-sm">Suggested</span>
+                            <span className="text-xl font-bold text-primary-accent">{card.suggestedSp} <span className="text-sm font-normal text-primary-accent">SP</span></span>
                           </div>
-                          <div className="bg-white/60 p-3 rounded border border-purple-100 flex items-center justify-between">
-                            <span className="text-gray-600 text-sm">Confidence</span>
-                            <span className="text-xl font-black text-indigo-700">{card.spConfidence}%</span>
+                          <div className="bg-surface/60 p-3 rounded-xl border border-primary flex items-center justify-between">
+                            <span className="text-secondary text-sm">Confidence</span>
+                            <span className="text-xl font-bold text-primary-accent">{card.spConfidence}%</span>
                           </div>
                         </div>
-                        <div className="bg-white/60 p-3 rounded border border-purple-100">
-                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Reasoning</span>
+                        <div className="bg-surface/60 p-3 rounded-xl border border-primary">
+                          <span className="text-xs font-bold text-muted uppercase tracking-wider mb-2 block">Reasoning</span>
                           <ul className="list-disc pl-4 space-y-1">
                             {(card.spReasons || []).map((reason, idx) => (
-                              <li key={idx} className="text-sm text-gray-700">{reason}</li>
+                              <li key={idx} className="text-sm text-secondary">{reason}</li>
                             ))}
                           </ul>
                         </div>
@@ -375,11 +376,11 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                     )}
                     
                     <div>
-                      <h3 className="font-bold text-gray-700 mb-2">Description</h3>
+                      <h3 className="font-bold text-secondary mb-2">Description</h3>
                       {snapshotCard.description ? (
-                        <p className="whitespace-pre-wrap text-gray-600 text-sm">{snapshotCard.description}</p>
+                        <p className="whitespace-pre-wrap text-secondary text-sm">{snapshotCard.description}</p>
                       ) : (
-                        <p className="text-gray-400 italic text-sm">No description provided.</p>
+                        <p className="text-muted italic text-sm">No description provided.</p>
                       )}
                     </div>
                   </>
@@ -387,9 +388,9 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Assignee</label>
+                        <label className="block text-sm font-bold text-secondary mb-1">Assignee</label>
                         <select
-                          className="w-full border p-2 rounded bg-white"
+                          className="w-full border p-2 rounded-xl bg-surface"
                           value={editAssignee}
                           onChange={(e) => setEditAssignee(e.target.value)}
                         >
@@ -402,7 +403,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Complexity (1-{boardComplexityMax})</label>
+                        <label className="block text-sm font-bold text-secondary mb-1">Complexity (1-{boardComplexityMax})</label>
                         <input
                           type="number"
                           className="w-full border p-2 rounded"
@@ -414,9 +415,9 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Description</label>
+                      <label className="block text-sm font-bold text-secondary mb-1">Description</label>
                       <textarea
-                        className="w-full border p-2 rounded min-h-[150px]"
+                        className="w-full border p-2 rounded-xl min-h-[150px]"
                         value={editDesc}
                         onChange={(e) => setEditDesc(e.target.value)}
                         placeholder="Add a more detailed description..."
@@ -432,19 +433,19 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
               <div className="flex flex-col h-full">
                 <div className="flex-1 overflow-y-auto mb-4 space-y-4">
                   {cardComments.length === 0 ? (
-                    <div className="text-gray-500 text-center py-8 italic text-sm">No comments yet.</div>
+                    <div className="text-muted text-center py-8 italic text-sm">No comments yet.</div>
                   ) : (
                     cardComments.map(comment => (
-                      <div key={comment.id} className="bg-gray-50 p-3 rounded border">
+                      <div key={comment.id} className="bg-background p-3 rounded-xl border">
                         <div className="flex justify-between items-start mb-1">
-                          <span className="font-bold text-sm text-gray-800">{comment.user.displayName}</span>
-                          <span className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</span>
+                          <span className="font-bold text-sm text-primary">{comment.user.displayName}</span>
+                          <span className="text-xs text-muted">{new Date(comment.createdAt).toLocaleString()}</span>
                         </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.body}</p>
+                        <p className="text-sm text-secondary whitespace-pre-wrap">{comment.body}</p>
                         {canComment && (
                           <button 
                             onClick={() => deleteComment(comment.id, snapshotCard.id, snapshotCard.boardId)}
-                            className="text-xs text-red-500 hover:text-red-700 mt-2"
+                            className="text-xs text-status-danger hover:text-status-danger mt-2"
                           >
                             Delete
                           </button>
@@ -457,13 +458,13 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                   <form onSubmit={handleAddComment} className="flex gap-2 pt-2 border-t">
                     <input
                       type="text"
-                      className="flex-1 border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="flex-1 border p-2 rounded-xl text-sm focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none outline-none"
                       placeholder="Write a comment..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       maxLength={1000}
                     />
-                    <button type="submit" disabled={!newComment.trim()} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+                    <button type="submit" disabled={!newComment.trim()} className="bg-primary text-inverse px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50">
                       Send
                     </button>
                   </form>
@@ -474,7 +475,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
             {activeTab === 'history' && (
               <div className="flex flex-col pt-2 pb-4">
                 {cardHistory.length === 0 ? (
-                  <div className="text-gray-500 text-center py-8 italic text-sm">No activity recorded.</div>
+                  <div className="text-muted text-center py-8 italic text-sm">No activity recorded.</div>
                 ) : (
                   cardHistory.map(log => {
                     const actor = log.user?.displayName || 'System';
@@ -485,28 +486,28 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                       case 'CARD_CREATED':
                         if (m.githubRepo && m.githubIssue && m.githubUrl) {
                           description = (
-                            <div className="flex flex-col gap-1.5 mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 w-full max-w-sm shadow-sm">
-                              <span className="font-semibold text-gray-900 flex items-center gap-2">
-                                <svg className="w-4 h-4 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" /></svg>
+                            <div className="flex flex-col gap-1.5 mt-2 p-3 bg-background border border rounded-2xl text-sm text-secondary w-full max-w-sm shadow-subtle">
+                              <span className="font-semibold text-primary flex items-center gap-2">
+                                <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" /></svg>
                                 Imported from GitHub
                               </span>
                               <div className="flex flex-col gap-1 mt-1 text-xs">
-                                <span><span className="font-medium text-gray-500 w-20 inline-block">Repository:</span> <span className="font-mono text-gray-800">{String(m.githubRepo)}</span></span>
-                                <span><span className="font-medium text-gray-500 w-20 inline-block">Issue:</span> <span className="font-mono text-gray-800">#{String(m.githubIssue)}</span></span>
-                                <span><span className="font-medium text-gray-500 w-20 inline-block">Original URL:</span> <a href={String(m.githubUrl)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">{String(m.githubUrl)} <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg></a></span>
+                                <span><span className="font-medium text-muted w-20 inline-block">Repository:</span> <span className="font-mono text-primary">{String(m.githubRepo)}</span></span>
+                                <span><span className="font-medium text-muted w-20 inline-block">Issue:</span> <span className="font-mono text-primary">#{String(m.githubIssue)}</span></span>
+                                <span><span className="font-medium text-muted w-20 inline-block">Original URL:</span> <a href={String(m.githubUrl)} target="_blank" rel="noreferrer" className="text-primary-accent hover:underline inline-flex items-center gap-1">{String(m.githubUrl)} <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg></a></span>
                               </div>
                             </div>
                           );
                         } else if (m.creationSource === 'Chrome Extension') {
                           description = (
-                            <div className="flex flex-col gap-1.5 mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 w-full max-w-sm shadow-sm">
-                              <span className="font-semibold text-gray-900 flex items-center gap-2">
-                                <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                            <div className="flex flex-col gap-1.5 mt-2 p-3 bg-background border border rounded-2xl text-sm text-secondary w-full max-w-sm shadow-subtle">
+                              <span className="font-semibold text-primary flex items-center gap-2">
+                                <svg className="w-4 h-4 text-primary-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
                                 Created from Chrome Extension
                               </span>
                               {m.referenceUrl && (
                                 <div className="flex flex-col gap-1 mt-1 text-xs">
-                                  <span className="flex items-start gap-1"><span className="font-medium text-gray-500 shrink-0">Source:</span> <a href={String(m.referenceUrl)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">{String(m.referenceUrl)}</a></span>
+                                  <span className="flex items-start gap-1"><span className="font-medium text-muted shrink-0">Source:</span> <a href={String(m.referenceUrl)} target="_blank" rel="noreferrer" className="text-primary-accent hover:underline break-all">{String(m.referenceUrl)}</a></span>
                                 </div>
                               )}
                             </div>
@@ -522,11 +523,11 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         description = (
                           <span>
                             renamed card from{' '}
-                            <em className="text-gray-600">
+                            <em className="text-secondary">
                               "{String(m.from)}"
                             </em>{' '}
                             to{' '}
-                            <em className="text-gray-900">
+                            <em className="text-primary">
                               "{String(m.to)}"
                             </em>
                           </span>
@@ -545,10 +546,10 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         description = 'added a comment';
                         break;
                       case 'COMPLEXITY_CHANGED':
-                        description = <span>changed complexity from <strong className="text-gray-900">{String(m.from ?? 'Unset')}</strong> to <strong className="text-gray-900">{String(m.to ?? 'Unset')}</strong></span>;
+                        description = <span>changed complexity from <strong className="text-primary">{String(m.from ?? 'Unset')}</strong> to <strong className="text-primary">{String(m.to ?? 'Unset')}</strong></span>;
                         break;
                       case 'ASSIGNMENT_CHANGED':
-                        description = <span>changed assignee from <strong className="text-gray-900">{String(m.from ?? 'Unassigned')}</strong> to <strong className="text-gray-900">{String(m.to ?? 'Unassigned')}</strong></span>;
+                        description = <span>changed assignee from <strong className="text-primary">{String(m.from ?? 'Unassigned')}</strong> to <strong className="text-primary">{String(m.to ?? 'Unassigned')}</strong></span>;
                         break;
                       case 'AI_COMPLEXITY_ACCEPTED':
                         description = m.title ? String(m.title) : 'accepted AI complexity suggestion';
@@ -561,17 +562,17 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                     }
 
                     return (
-                      <div key={log.id} className="flex flex-col py-4 border-b border-gray-100 last:border-0">
+                      <div key={log.id} className="flex flex-col py-4 border-b border last:border-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold text-xs shrink-0">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-elevated text-primary border border font-bold text-xs shrink-0">
                             {actor.charAt(0).toUpperCase()}
                           </div>
-                          <span className="font-bold text-sm text-gray-900">{actor}</span>
+                          <span className="font-bold text-sm text-primary">{actor}</span>
                         </div>
-                        <div className="text-sm text-gray-700 ml-8 mb-2 whitespace-normal break-words">
+                        <div className="text-sm text-secondary ml-8 mb-2 whitespace-normal break-words">
                           {description}
                         </div>
-                        <div className="text-xs text-gray-500 ml-8">
+                        <div className="text-xs text-muted ml-8">
                           {new Date(log.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
@@ -583,14 +584,14 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
+          <div className="px-6 py-4 border-t bg-background flex justify-between items-center">
             {activeTab === 'details' ? (
               <>
                 <div>
                   {canDelete && (
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
-                      className="text-red-500 hover:text-red-700 font-medium text-sm"
+                      className="text-status-danger hover:text-status-danger font-medium text-sm"
                     >
                       Delete Card
                     </button>
@@ -599,7 +600,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                 <div className="flex gap-2">
                   {!isEditing ? (
                     canEdit && (
-                      <button onClick={() => setIsEditing(true)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300">
+                      <button onClick={() => setIsEditing(true)} className="bg-elevated text-primary px-4 py-2 rounded-xl text-sm font-medium hover:bg-elevated">
                         Edit
                       </button>
                     )
@@ -611,10 +612,10 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                         setEditDesc(snapshotCard.description || '');
                         setEditComplexity(snapshotCard.complexity || '');
                         setEditAssignee(snapshotCard.assigneeId || '');
-                      }} className="text-gray-600 hover:text-gray-800 px-4 py-2 text-sm font-medium">
+                      }} className="text-secondary hover:text-primary px-4 py-2 text-sm font-medium">
                         Cancel
                       </button>
-                      <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
+                      <button onClick={handleSave} className="bg-primary text-inverse px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary-hover text-inverse">
                         Save
                       </button>
                     </>
@@ -623,7 +624,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
               </>
             ) : (
               <div className="w-full flex justify-end">
-                <button onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium hover:bg-gray-300">
+                <button onClick={onClose} className="bg-elevated text-primary px-4 py-2 rounded-xl text-sm font-medium hover:bg-elevated">
                   Close
                 </button>
               </div>
@@ -633,14 +634,14 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
       </div>
       
       {conflictError && (
-        <div className="fixed inset-0 bg-white/90 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-          <div className="bg-white border shadow-2xl rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-red-600 mb-2 flex items-center gap-2">
-              <span>⚠️</span> Version Conflict
+        <div className="fixed inset-0 bg-surface/90 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-surface border shadow-2xl rounded-2xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-status-danger mb-2 flex items-center gap-2">
+              <span><AlertTriangle className="w-4 h-4 inline-block mr-1 text-status-warning" /></span> Version Conflict
             </h3>
-            <p className="text-gray-700 mb-4">{conflictError.message}</p>
+            <p className="text-secondary mb-4">{conflictError.message}</p>
             
-            <div className="bg-gray-50 border rounded p-3 mb-4 text-sm font-mono space-y-2">
+            <div className="bg-background border rounded-xl p-3 mb-4 text-sm font-mono space-y-2">
               <div>Your version: v{snapshotCard.version}</div>
               <div>Latest version: v{conflictError.latestCard?.version || '?'}</div>
               {snapshotCard.updatedAt && <div>Your timestamp: {new Date(snapshotCard.updatedAt).toLocaleString()}</div>}
@@ -659,7 +660,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                   }
                   setConflictError(null);
                 }}
-                className="bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 w-full"
+                className="bg-primary text-inverse py-2 rounded-xl font-medium hover:bg-primary-hover text-inverse w-full"
               >
                 Reload Latest Version
               </button>
@@ -670,13 +671,13 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                   );
                   addToast("Copied unsaved changes to clipboard", "success");
                 }}
-                className="bg-gray-100 text-gray-800 py-2 rounded font-medium hover:bg-gray-200 border w-full"
+                className="bg-elevated text-primary py-2 rounded-xl font-medium hover:bg-elevated border w-full"
               >
                 Copy My Unsaved Changes
               </button>
               <button 
                 onClick={() => setConflictError(null)}
-                className="text-gray-500 hover:text-gray-700 py-2 text-sm font-medium w-full mt-2"
+                className="text-muted hover:text-secondary py-2 text-sm font-medium w-full mt-2"
               >
                 Continue Editing (Discard Warning)
               </button>

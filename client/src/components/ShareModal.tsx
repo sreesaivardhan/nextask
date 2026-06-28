@@ -85,46 +85,46 @@ export function ShareModal({ boardId, onClose, currentUserRole }: ShareModalProp
   const canInvite = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-surface rounded-2xl shadow-floating w-full max-w-md max-h-[80vh] flex flex-col">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-xl font-bold">Share Board</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 font-bold">&times;</button>
+          <button onClick={onClose} className="text-muted hover:text-secondary font-bold">&times;</button>
         </div>
 
         <div className="p-4 flex-1 overflow-y-auto">
           {canInvite && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Invite Members</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Invite Members</label>
               <input
                 type="text"
-                className="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-xl p-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none"
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               
               {searchQuery && (
-                <div className="mt-2 bg-gray-50 border rounded max-h-40 overflow-y-auto">
+                <div className="mt-2 bg-background border rounded-xl max-h-40 overflow-y-auto">
                   {isSearching ? (
-                    <div className="p-2 text-sm text-gray-500">Searching...</div>
+                    <div className="p-2 text-sm text-muted">Searching...</div>
                   ) : searchResults.length > 0 ? (
                     searchResults.map((su) => (
-                      <div key={su.id} className="p-2 flex justify-between items-center border-b last:border-0 hover:bg-gray-100">
+                      <div key={su.id} className="p-2 flex justify-between items-center border-b last:border-0 hover:bg-elevated">
                         <div>
                           <div className="text-sm font-medium">{su.displayName}</div>
-                          <div className="text-xs text-gray-500">{su.email || ''}</div>
+                          <div className="text-xs text-muted">{su.email || ''}</div>
                         </div>
                         <button
                           onClick={() => handleInvite(su.id)}
-                          className="text-blue-600 font-medium text-sm hover:underline"
+                          className="text-primary-accent font-medium text-sm hover:underline"
                         >
                           Invite
                         </button>
                       </div>
                     ))
                   ) : (
-                    <div className="p-2 text-sm text-gray-500">No users found.</div>
+                    <div className="p-2 text-sm text-muted">No users found.</div>
                   )}
                 </div>
               )}
@@ -132,23 +132,23 @@ export function ShareModal({ boardId, onClose, currentUserRole }: ShareModalProp
           )}
 
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Members ({boardMembers.length})</h3>
+            <h3 className="text-sm font-medium text-secondary mb-2">Members ({boardMembers.length})</h3>
             <div className="space-y-3">
               {sortedMembers.map((m) => {
                 const isMe = m.userId === user?.id;
                 const manageable = !isMe && canManageRole(m.role);
 
                 return (
-                  <div key={m.userId} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                  <div key={m.userId} className="flex justify-between items-center bg-background p-2 rounded">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary-accent flex items-center justify-center font-bold text-sm">
                         {m.user.displayName.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div className="text-sm font-medium">
                           {m.user.displayName} {isMe && '(You)'}
                         </div>
-                        <div className="text-xs text-gray-500">{m.role}</div>
+                        <div className="text-xs text-muted">{m.role}</div>
                       </div>
                     </div>
 
@@ -158,18 +158,18 @@ export function ShareModal({ boardId, onClose, currentUserRole }: ShareModalProp
                           <select
                             value={m.role}
                             onChange={(e) => handleUpdateRole(m.userId, e.target.value)}
-                            className="text-sm border rounded p-1"
+                            className="text-sm border rounded-xl p-1"
                           >
                             {ROLES.map(r => (
                               <option key={r} value={r} disabled={!canManageRole(r)}>{r}</option>
                             ))}
                           </select>
-                          <button onClick={() => handleRemove(m.userId)} className="text-red-500 text-sm hover:underline">
+                          <button onClick={() => handleRemove(m.userId)} className="text-status-danger text-sm hover:underline">
                             Remove
                           </button>
                         </>
                       ) : (
-                        <span className="text-xs bg-gray-200 px-2 py-1 rounded text-gray-700 font-medium">{m.role}</span>
+                        <span className="text-xs bg-elevated px-2 py-1 rounded-xl text-secondary font-medium">{m.role}</span>
                       )}
                     </div>
                   </div>
@@ -179,10 +179,10 @@ export function ShareModal({ boardId, onClose, currentUserRole }: ShareModalProp
           </div>
         </div>
 
-        <div className="p-4 border-t flex justify-end bg-gray-50 rounded-b-lg">
+        <div className="p-4 border-t flex justify-end bg-background rounded-b-lg">
           <button
             onClick={onClose}
-            className="bg-gray-200 text-gray-800 px-4 py-2 rounded font-medium hover:bg-gray-300"
+            className="bg-elevated text-primary px-4 py-2 rounded-xl font-medium hover:bg-elevated"
           >
             Close
           </button>

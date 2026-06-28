@@ -145,65 +145,65 @@ export function DashboardPage(): React.ReactElement {
   const sharedBoards = boards.filter(b => b.ownerId !== user?.id);
 
   const renderBoardCard = (board: import('../stores/boardStore').Board) => (
-    <div key={board.id} className="bg-white p-6 rounded shadow border border-gray-200 flex flex-col">
+    <div key={board.id} className="bg-surface p-6 rounded-xl shadow border border flex flex-col">
       {editingId === board.id ? (
         <div className="flex flex-col gap-3 mb-4 flex-1">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Board Name</label>
+            <label className="block text-xs font-medium text-secondary mb-1">Board Name</label>
             <input
               type="text"
               value={editingName}
               onChange={(e) => setEditingName(e.target.value)}
-              className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full border p-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none text-sm"
               autoFocus
               maxLength={100}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Sprint End Date</label>
+              <label className="block text-xs font-medium text-secondary mb-1">Sprint End Date</label>
               <input
                 type="date"
                 value={editingSprintEndDate}
                 onChange={(e) => setEditingSprintEndDate(e.target.value)}
-                className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full border p-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Max Complexity (1-10)</label>
+              <label className="block text-xs font-medium text-secondary mb-1">Max Complexity (1-10)</label>
               <input
                 type="number"
                 min="1"
                 max="10"
                 value={editingComplexityMax}
                 onChange={(e) => setEditingComplexityMax(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full border p-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none text-sm"
               />
             </div>
           </div>
           <div className="flex justify-end gap-2 mt-1">
-            <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-gray-600 hover:text-gray-800 font-medium text-sm">
+            <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-secondary hover:text-primary font-medium text-sm">
               Cancel
             </button>
-            <button onClick={() => handleUpdateBoard(board.id)} className="bg-green-600 text-white px-3 py-1.5 rounded font-medium hover:bg-green-700 text-sm">
+            <button onClick={() => handleUpdateBoard(board.id)} className="bg-primary text-inverse px-3 py-1.5 rounded-xl font-medium hover:bg-primary-hover transition-colors text-sm">
               Save Settings
             </button>
           </div>
         </div>
       ) : (
         <div className="flex justify-between items-start mb-4 overflow-hidden">
-          <h2 className="text-xl font-bold text-gray-800 truncate pr-2" title={board.name}>
+          <h2 className="text-xl font-bold text-primary truncate pr-2" title={board.name}>
             {board.name}
           </h2>
         </div>
       )}
 
-      <div className="text-sm text-gray-500 mb-6 flex-1">
+      <div className="text-sm text-muted mb-6 flex-1">
         Created {new Date(board.createdAt).toLocaleDateString()}
       </div>
 
       <div className="flex justify-between items-center mt-auto border-t pt-4">
-        <Link to={`/boards/${board.id}`} className="text-blue-600 font-medium hover:underline">
+        <Link to={`/boards/${board.id}`} className="text-primary-accent font-medium hover:underline">
           Open Board
         </Link>
         <div className="flex gap-3 text-sm">
@@ -216,13 +216,13 @@ export function DashboardPage(): React.ReactElement {
                   setEditingSprintEndDate(board.sprintEndDate ? new Date(board.sprintEndDate).toISOString().split('T')[0] : '');
                   setEditingComplexityMax(board.complexityMax ?? 5);
                 }}
-                className="text-gray-500 hover:text-blue-600 font-medium"
+                className="text-secondary hover:text-primary font-medium border border rounded-lg px-2.5 py-1 text-xs hover:bg-elevated transition-colors"
               >
                 Settings
               </button>
               <button
                 onClick={() => handleDelete(board.id, board.name)}
-                className="text-red-500 hover:text-red-700 font-medium"
+                className="text-status-danger hover:text-status-danger font-medium"
               >
                 Delete
               </button>
@@ -236,24 +236,24 @@ export function DashboardPage(): React.ReactElement {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Your Boards</h1>
+        <h1 className="text-2xl font-bold text-primary">Your Boards</h1>
         <button
           onClick={() => setIsCreating(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 transition"
+          className="bg-primary text-inverse px-4 py-2 rounded-xl font-medium hover:bg-primary-hover text-inverse transition"
         >
           Create Board
         </button>
       </div>
 
       {isCreating && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40">
+          <div className="bg-surface p-6 rounded-xl shadow-floating border border-strong w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Create Board</h2>
             <form onSubmit={handleCreate} className="flex flex-col gap-4">
               <input
                 type="text"
                 placeholder="Board Name"
-                className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border p-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none"
                 value={newBoardName}
                 onChange={(e) => setNewBoardName(e.target.value)}
                 autoFocus
@@ -263,11 +263,11 @@ export function DashboardPage(): React.ReactElement {
                 <button
                   type="button"
                   onClick={() => setIsCreating(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                  className="px-4 py-2 text-secondary hover:text-primary font-medium"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700">
+                <button type="submit" className="bg-primary text-inverse px-4 py-2 rounded-xl font-medium hover:bg-primary-hover text-inverse">
                   Create
                 </button>
               </div>
@@ -279,14 +279,14 @@ export function DashboardPage(): React.ReactElement {
       {isLoading ? (
         <div>Loading boards...</div>
       ) : boards.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted">
           No boards yet. Create one to get started!
         </div>
       ) : (
         <div className="space-y-8">
           {ownedBoards.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Owned Boards</h2>
+              <h2 className="text-lg font-semibold text-secondary mb-4 border-b pb-2">Owned Boards</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {ownedBoards.map(renderBoardCard)}
               </div>
@@ -294,7 +294,7 @@ export function DashboardPage(): React.ReactElement {
           )}
           {sharedBoards.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Shared Boards</h2>
+              <h2 className="text-lg font-semibold text-secondary mb-4 border-b pb-2">Shared Boards</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sharedBoards.map(renderBoardCard)}
               </div>

@@ -1,3 +1,85 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode - Warm Ivory Workspace */
+    --bg-page: #FDFBF7;
+    --bg-surface: #FFFFFF;
+    --bg-elevated: #F8F6F1;
+    
+    --border-subtle: #EBE6DF;
+    --border-strong: #D6CEC3;
+
+    --text-primary: #1F1C18;
+    --text-secondary: #6B655B;
+    --text-muted: #948F87;
+
+    --accent-primary: #D36C54; /* Muted coral/terracotta */
+    --accent-hover: #C25B44;
+    
+    --accent-ghost-hover: #F2EBE1;
+
+    --status-success: #52896C;
+    --status-warning: #D28F3D;
+    --status-danger: #C05850;
+    --status-info: #487A9A;
+  }
+
+  /* Support dark mode class */
+  .dark {
+    /* Dark Mode - Deep Charcoal & Graphite */
+    --bg-page: #121212;
+    --bg-surface: #1A1A1A;
+    --bg-elevated: #242424;
+    
+    --border-subtle: #2E2E2E;
+    --border-strong: #3F3F3F;
+
+    --text-primary: #EAEAEA;
+    --text-secondary: #9E9E9E;
+    --text-muted: #6B6B6B;
+
+    --accent-primary: #D9695C;
+    --accent-hover: #C5564A;
+    
+    --accent-ghost-hover: #2A2A2A;
+
+    --status-success: #4E9A70;
+    --status-warning: #CF9547;
+    --status-danger: #D4665C;
+    --status-info: #5B95B9;
+  }
+
+  body {
+    @apply bg-background text-primary antialiased font-sans transition-colors duration-200;
+  }
+
+  /* Custom scrollbar for webkit */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

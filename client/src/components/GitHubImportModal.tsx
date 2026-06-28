@@ -90,11 +90,11 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={['input', 'preview', 'completed'].includes(step) ? onClose : undefined} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-800">Import from GitHub</h2>
+      <div className="relative bg-surface rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+        <div className="px-6 py-4 border-b border flex items-center justify-between">
+          <h2 className="text-xl font-bold text-primary">Import from GitHub</h2>
           {['input', 'preview', 'completed'].includes(step) && (
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="text-muted hover:text-secondary">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -104,7 +104,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
 
         <div className="p-6 overflow-y-auto flex-1">
           {error && (
-            <div className="mb-4 bg-red-50 text-red-600 p-3 rounded text-sm border border-red-100 flex items-start gap-2">
+            <div className="mb-4 bg-status-danger/5 text-status-danger border border-status-danger/20 p-3 rounded-xl text-sm flex items-start gap-2">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -115,7 +115,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           {step === 'input' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-secondary mb-1">
                   Public Repository URL
                 </label>
                 <input
@@ -123,10 +123,10 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
                   value={url}
                   onChange={handleUrlChange}
                   placeholder="https://github.com/facebook/react"
-                  className="w-full border border-gray-300 rounded-md p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-strong rounded-2xl p-2.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none"
                   onKeyDown={(e) => e.key === 'Enter' && isValidUrl && handlePreview()}
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted mt-2">
                   Only open issues (excluding pull requests) will be imported. Ensure the repository is public.
                 </p>
               </div>
@@ -134,8 +134,8 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
 
           {step === 'validating' && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-12 text-muted">
+              <svg className="animate-spin h-8 w-8 text-primary-accent mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -144,8 +144,8 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
 
           {step === 'fetching' && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-12 text-muted">
+              <svg className="animate-spin h-8 w-8 text-primary-accent mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -154,8 +154,8 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
 
           {step === 'preparing_preview' && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-12 text-muted">
+              <svg className="animate-spin h-8 w-8 text-primary-accent mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -165,40 +165,40 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
 
           {step === 'preview' && preview && (
             <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{preview.repo}</h3>
-                <ul className="text-sm space-y-1 text-gray-700">
+              <div className="bg-background p-4 rounded-2xl border border">
+                <h3 className="text-lg font-bold text-primary mb-2">{preview.repo}</h3>
+                <ul className="text-sm space-y-1 text-secondary">
                   <li><span className="font-medium">Total Open Issues:</span> {preview.totalOpenIssues}</li>
                   <li><span className="font-medium">Import Limit:</span> {preview.importLimit}</li>
-                  <li><span className="font-medium text-green-700">Eligible Issues:</span> {preview.importableCount}</li>
+                  <li><span className="font-medium text-status-success">Eligible Issues:</span> {preview.importableCount}</li>
                   <li><span className="font-medium">Skipped Existing:</span> {preview.skippedCount}</li>
-                  <li><span className="font-medium text-gray-500">Pull Requests Ignored:</span> {preview.pullRequestsIgnored}</li>
+                  <li><span className="font-medium text-muted">Pull Requests Ignored:</span> {preview.pullRequestsIgnored}</li>
                 </ul>
               </div>
 
               {preview.importableCount > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wider">Preview</h3>
-                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 border border-gray-100 rounded-lg p-2 bg-gray-50/50">
+                  <h3 className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Preview</h3>
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 border border rounded-2xl p-2 bg-background/50">
                     {preview.sampleIssues.map((issue) => (
-                      <div key={issue.number} className="bg-white p-3 rounded shadow-sm border border-gray-100 text-sm">
+                      <div key={issue.number} className="bg-surface p-3 rounded-xl shadow-subtle border border text-sm">
                         <div className="flex gap-2 items-start mb-1">
-                          <span className="text-gray-400 font-mono">#{issue.number}</span>
-                          <span className="font-medium text-gray-800 line-clamp-2">{issue.title}</span>
+                          <span className="text-muted font-mono">#{issue.number}</span>
+                          <span className="font-medium text-primary line-clamp-2">{issue.title}</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {issue.labels.map(l => (
-                            <span key={l.name} className="px-2 py-0.5 rounded text-xs font-medium border" style={{ backgroundColor: `#${l.color}20`, borderColor: `#${l.color}40`, color: `#${l.color}` }}>
+                            <span key={l.name} className="px-2 py-0.5 rounded-xl text-xs font-medium border" style={{ backgroundColor: `#${l.color}20`, borderColor: `#${l.color}40`, color: `#${l.color}` }}>
                               {l.name}
                             </span>
                           ))}
                           {issue.assignee && (
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                            <span className="px-2 py-0.5 rounded-xl text-xs font-medium bg-surface text-primary-accent border border-primary">
                               @{issue.assignee}
                             </span>
                           )}
                           {issue.milestone && (
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
+                            <span className="px-2 py-0.5 rounded-xl text-xs font-medium bg-status-warning/5 text-status-warning border border-status-warning/20">
                               {issue.milestone}
                             </span>
                           )}
@@ -206,7 +206,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
                       </div>
                     ))}
                     {preview.importableCount > preview.sampleIssues.length && (
-                      <div className="text-center py-2 text-xs text-gray-500 font-medium">
+                      <div className="text-center py-2 text-xs text-muted font-medium">
                         + {preview.importableCount - preview.sampleIssues.length} more issues
                       </div>
                     )}
@@ -217,8 +217,8 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
 
           {step === 'importing' && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-12 text-muted">
+              <svg className="animate-spin h-8 w-8 text-primary-accent mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -227,8 +227,8 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
 
           {step === 'creating_cards' && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-12 text-muted">
+              <svg className="animate-spin h-8 w-8 text-primary-accent mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -237,8 +237,8 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
 
           {step === 'running_ai' && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div className="flex flex-col items-center justify-center py-12 text-muted">
+              <svg className="animate-spin h-8 w-8 text-primary-accent mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -247,30 +247,30 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
 
           {step === 'completed' && importResult && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-800">
-              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center py-12 text-primary">
+              <div className="w-12 h-12 bg-status-success/5 text-status-success border border-status-success/10 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <p className="font-medium text-lg mb-4">Completed</p>
-              <div className="bg-gray-50 p-4 rounded-lg w-full max-w-sm border border-gray-200">
+              <div className="bg-background p-4 rounded-2xl w-full max-w-sm border border">
                 <ul className="text-sm space-y-2">
-                  <li className="flex justify-between"><span className="text-gray-600">Imported:</span><span className="font-bold">{importResult.importedCount}</span></li>
-                  <li className="flex justify-between"><span className="text-gray-600">Skipped:</span><span className="font-bold">{importResult.skippedCount}</span></li>
-                  <li className="flex justify-between"><span className="text-gray-600">Pull Requests Ignored:</span><span className="font-bold">{importResult.pullRequestsIgnored}</span></li>
-                  <li className="flex justify-between"><span className="text-gray-600">Existing Cards:</span><span className="font-bold">{importResult.skippedCount}</span></li>
+                  <li className="flex justify-between"><span className="text-secondary">Imported:</span><span className="font-bold">{importResult.importedCount}</span></li>
+                  <li className="flex justify-between"><span className="text-secondary">Skipped:</span><span className="font-bold">{importResult.skippedCount}</span></li>
+                  <li className="flex justify-between"><span className="text-secondary">Pull Requests Ignored:</span><span className="font-bold">{importResult.pullRequestsIgnored}</span></li>
+                  <li className="flex justify-between"><span className="text-secondary">Existing Cards:</span><span className="font-bold">{importResult.skippedCount}</span></li>
                 </ul>
               </div>
             </div>
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-xl">
+        <div className="px-6 py-4 border-t border flex justify-end gap-3 bg-background rounded-b-xl">
           {['input', 'preview', 'completed'].includes(step) && (
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition"
+              className="px-4 py-2 text-sm font-medium text-secondary hover:bg-elevated rounded-2xl transition"
             >
               Cancel
             </button>
@@ -280,7 +280,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
             <button
               onClick={handlePreview}
               disabled={!isValidUrl || !!error}
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-md transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium bg-primary text-inverse hover:bg-primary-hover text-inverse rounded-2xl transition shadow-subtle disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Preview Issues
             </button>
@@ -290,7 +290,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
             <button
               onClick={handleImport}
               disabled={preview?.importableCount === 0}
-              className="px-4 py-2 text-sm font-medium bg-green-600 text-white hover:bg-green-700 rounded-md transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium bg-primary text-inverse hover:bg-primary-hover transition rounded-2xl shadow-subtle disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {preview?.importableCount ? `Import ${preview.importableCount} Issues` : 'Import 0 Issues'}
             </button>
@@ -299,7 +299,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           {step === 'completed' && importResult && (
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-md transition shadow-sm"
+              className="px-4 py-2 text-sm font-medium bg-primary text-inverse hover:bg-primary-hover text-inverse rounded-2xl transition shadow-subtle"
             >
               Close
             </button>

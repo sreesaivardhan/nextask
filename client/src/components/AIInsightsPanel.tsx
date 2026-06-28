@@ -1,3 +1,4 @@
+import { Search , TrendingUp , AlertTriangle , Sparkles } from 'lucide-react';
 import { useEffect } from 'react';
 import { useInsightStore } from '../stores/insightStore';
 
@@ -52,14 +53,14 @@ export function AIInsightsPanel({ boardId }: AIInsightsPanelProps) {
 
   const getRiskBadge = (risk: string) => {
     const colors: Record<string, string> = {
-      LOW: 'bg-green-100 text-green-800 border-green-200',
-      MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      HIGH: 'bg-red-100 text-red-800 border-red-200',
-      ACTIVE: 'bg-blue-100 text-blue-800 border-blue-200',
+      LOW: 'bg-status-success/10 text-status-success border border-status-success/30',
+      MEDIUM: 'bg-status-warning/10 text-status-warning border border-status-warning/30',
+      HIGH: 'bg-status-danger/10 text-status-danger border border-status-danger/30',
+      ACTIVE: 'bg-primary/10 text-primary-accent border border-primary/30',
     };
-    const badgeClass = colors[risk] || 'bg-gray-100 text-gray-800 border-gray-200';
+    const badgeClass = colors[risk] || 'bg-elevated text-secondary border';
     return (
-      <span className={`text-xs px-2 py-0.5 rounded border font-semibold ${badgeClass}`}>
+      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${badgeClass}`}>
         {risk}
       </span>
     );
@@ -72,28 +73,31 @@ export function AIInsightsPanel({ boardId }: AIInsightsPanelProps) {
         : formatPercentage(insight.data?.score as number, true);
 
       return (
-        <div key={insight.id} className="p-3 bg-blue-50 border border-blue-100 rounded text-sm w-full">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-blue-800 truncate pr-2">🔍 {insight.title}</h3>
+        <div key={insight.id} className="p-3 bg-surface border border rounded-xl text-sm w-full">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-primary truncate pr-2 flex items-center gap-1.5">
+              <Search className="w-4 h-4 text-primary-accent shrink-0" /> {insight.title}
+            </h3>
             {getRiskBadge('ACTIVE')}
           </div>
           
-          <div className="bg-blue-100 p-2 rounded mb-2 flex justify-between items-center text-blue-800 font-bold">
-            <span>Congestion:</span>
-            <span>{severityStr}</span>
+          {/* Metric row — neutral background, accent accent strip */}
+          <div className="bg-background border rounded-lg p-2.5 mb-2.5 flex justify-between items-center">
+            <span className="text-xs font-semibold text-secondary">Congestion</span>
+            <span className="text-base font-black text-primary-accent">{severityStr}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs text-blue-600 mb-2">
-            <div className="truncate"><strong>Column:</strong> {String(insight.data?.column)}</div>
-            <div className="truncate"><strong>Cards:</strong> {String(insight.data?.cardCount)}</div>
+          <div className="grid grid-cols-2 gap-2 text-xs text-secondary mb-2">
+            <div className="truncate"><strong className="text-primary">Column:</strong> {String(insight.data?.column)}</div>
+            <div className="truncate"><strong className="text-primary">Cards:</strong> {String(insight.data?.cardCount)}</div>
           </div>
           
-          <div className="text-xs text-blue-600 mb-2">
-            <strong>Reason:</strong>
-            <p className="mt-1 break-words">{String(insight.summary)}</p>
+          <div className="text-xs text-secondary mb-2">
+            <strong className="text-primary">Reason:</strong>
+            <p className="mt-1 break-words text-secondary leading-relaxed">{String(insight.summary)}</p>
           </div>
 
-          <div className="text-xs text-blue-400 mt-2">
+          <div className="text-[11px] text-muted mt-2">
             {new Date(insight.createdAt).toLocaleString()}
           </div>
         </div>
@@ -114,29 +118,31 @@ export function AIInsightsPanel({ boardId }: AIInsightsPanelProps) {
       }
 
       return (
-        <div key={insight.id} className="p-3 bg-purple-50 border border-purple-100 rounded text-sm w-full">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-purple-800 truncate pr-2">📈 {insight.title}</h3>
+        <div key={insight.id} className="p-3 bg-surface border border rounded-xl text-sm w-full">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-primary truncate pr-2 flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4 text-primary-accent shrink-0" /> {insight.title}
+            </h3>
             {getRiskBadge(risk)}
           </div>
           
-          <div className="bg-purple-100 p-2 rounded mb-2 flex justify-between items-center text-purple-800 font-bold">
-            <span>Completion Confidence:</span>
-            <span>{compConfStr}</span>
+          <div className="bg-background border rounded-lg p-2.5 mb-2.5 flex justify-between items-center">
+            <span className="text-xs font-semibold text-secondary">Completion Confidence</span>
+            <span className="text-base font-black text-primary">{compConfStr}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs text-purple-600 mb-2">
-            <div className="truncate"><strong>Completed:</strong> {String(insight.data?.completedCards)}</div>
-            <div className="truncate"><strong>Remaining:</strong> {String(insight.data?.remainingCards)}</div>
-            <div className="col-span-2 truncate"><strong>Days Left:</strong> {String(insight.data?.remainingDays)}</div>
+          <div className="grid grid-cols-2 gap-2 text-xs text-secondary mb-2">
+            <div className="truncate"><strong className="text-primary">Completed:</strong> {String(insight.data?.completedCards)}</div>
+            <div className="truncate"><strong className="text-primary">Remaining:</strong> {String(insight.data?.remainingCards)}</div>
+            <div className="col-span-2 truncate"><strong className="text-primary">Days Left:</strong> {String(insight.data?.remainingDays)}</div>
           </div>
           
-          <div className="text-xs text-purple-600 mb-2">
-            <strong>Reason:</strong>
-            <p className="mt-1 break-words">{insight.summary}</p>
+          <div className="text-xs text-secondary mb-2">
+            <strong className="text-primary">Reason:</strong>
+            <p className="mt-1 break-words text-secondary leading-relaxed">{insight.summary}</p>
           </div>
 
-          <div className="text-xs text-purple-400 mt-2">
+          <div className="text-[11px] text-muted mt-2">
             {new Date(insight.createdAt).toLocaleString()}
           </div>
         </div>
@@ -152,28 +158,30 @@ export function AIInsightsPanel({ boardId }: AIInsightsPanelProps) {
         : formatPercentage((insight.data?.score as number) / 15, true);
 
       return (
-        <div key={insight.id} className="p-3 bg-orange-50 border border-orange-100 rounded text-sm w-full">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-orange-800 truncate pr-2">⚠️ {insight.title}</h3>
+        <div key={insight.id} className="p-3 bg-surface border-l-2 border-l-status-warning border border rounded-xl text-sm w-full">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-status-warning truncate pr-2 flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 shrink-0" /> {insight.title}
+            </h3>
             {getRiskBadge(risk)}
           </div>
           
-          <div className="bg-orange-100 p-2 rounded mb-2 flex justify-between items-center text-orange-800 font-bold">
-            <span>Miss Probability:</span>
-            <span>{missProbStr}</span>
+          <div className="bg-status-warning/5 border border-status-warning/20 rounded-lg p-2.5 mb-2.5 flex justify-between items-center">
+            <span className="text-xs font-semibold text-secondary">Miss Probability</span>
+            <span className="text-base font-black text-status-warning">{missProbStr}</span>
           </div>
           
-          <p className="text-orange-700 mb-2 font-semibold break-words">Task: {String(insight.data?.taskTitle)}</p>
+          <p className="text-primary mb-2 font-semibold break-words text-sm">Task: {String(insight.data?.taskTitle)}</p>
 
-          <div className="grid grid-cols-2 gap-2 text-xs text-orange-600 mb-2">
-            <div className="truncate"><strong>Days Left:</strong> {String(insight.data?.daysRemaining)}</div>
-            <div className="truncate"><strong>Column:</strong> {String(insight.data?.column)}</div>
-            <div className="col-span-2 truncate"><strong>Assignee:</strong> {String(insight.data?.assignee)}</div>
+          <div className="grid grid-cols-2 gap-2 text-xs text-secondary mb-2">
+            <div className="truncate"><strong className="text-primary">Days Left:</strong> {String(insight.data?.daysRemaining)}</div>
+            <div className="truncate"><strong className="text-primary">Column:</strong> {String(insight.data?.column)}</div>
+            <div className="col-span-2 truncate"><strong className="text-primary">Assignee:</strong> {String(insight.data?.assignee)}</div>
           </div>
 
           {reasons && reasons.length > 0 && (
-            <div className="text-xs text-orange-600 mb-2">
-              <strong>Reasons:</strong>
+            <div className="text-xs text-secondary mb-2">
+              <strong className="text-primary">Reasons:</strong>
               <ul className="list-disc pl-4 mt-1 space-y-0.5 break-words">
                 {reasons.map((r, i) => (
                   <li key={i}>{formatReason(r)}</li>
@@ -182,7 +190,7 @@ export function AIInsightsPanel({ boardId }: AIInsightsPanelProps) {
             </div>
           )}
 
-          <div className="text-xs text-orange-400 mt-2">
+          <div className="text-[11px] text-muted mt-2">
             {new Date(insight.createdAt).toLocaleString()}
           </div>
         </div>
@@ -193,35 +201,32 @@ export function AIInsightsPanel({ boardId }: AIInsightsPanelProps) {
   };
 
   return (
-    <div className="bg-white border rounded shadow-sm flex flex-col w-80 shrink-0" style={{ maxHeight: 'calc(100vh - 120px)' }}>
-      <div className="p-4 pb-2 border-b shrink-0 flex items-center justify-between">
-        <h2 className="font-bold text-lg text-gray-800">AI Insights</h2>
+    <div className="bg-surface border border rounded-xl shadow-subtle flex flex-col w-80 shrink-0" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+      <div className="p-4 pb-3 border-b shrink-0 flex items-center justify-between">
+        <h2 className="font-bold text-base text-primary">AI Insights</h2>
+        <Sparkles className="w-4 h-4 text-primary-accent" />
       </div>
       
       {loading ? (
-        <div className="p-4 space-y-4">
-          <div className="animate-pulse bg-gray-200 h-24 rounded w-full"></div>
-          <div className="animate-pulse bg-gray-200 h-24 rounded w-full"></div>
-          <div className="animate-pulse bg-gray-200 h-24 rounded w-full"></div>
+        <div className="p-4 space-y-3 flex-1">
+          <div className="animate-pulse bg-elevated h-24 rounded-xl w-full"></div>
+          <div className="animate-pulse bg-elevated h-24 rounded-xl w-full"></div>
+          <div className="animate-pulse bg-elevated h-20 rounded-xl w-full"></div>
         </div>
       ) : sortedInsights.length === 0 ? (
-        <div className="p-8 flex flex-col items-center justify-center text-center text-gray-400 h-full">
-          <span className="text-4xl mb-2">✨</span>
-          <p className="text-sm">No insights generated yet. AI will automatically analyze your board shortly.</p>
+        <div className="p-8 flex flex-col items-center justify-center text-center text-muted h-full gap-3">
+          <Sparkles className="w-6 h-6 text-primary-accent opacity-50" />
+          <p className="text-sm leading-relaxed">No insights generated yet. AI will automatically analyze your board shortly.</p>
         </div>
       ) : (
-        <div className="flex flex-col flex-1 overflow-hidden p-4 space-y-4">
-          {topInsights.length > 0 && (
-            <div className="shrink-0 space-y-4">
-              {topInsights.map(renderInsight)}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
+          {topInsights.map(renderInsight)}
+          {taskInsights.length > 0 && topInsights.length > 0 && (
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted px-1 pt-1">
+              At-risk Tasks
             </div>
           )}
-          
-          {taskInsights.length > 0 && (
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-              {taskInsights.map(renderInsight)}
-            </div>
-          )}
+          {taskInsights.map(renderInsight)}
         </div>
       )}
     </div>

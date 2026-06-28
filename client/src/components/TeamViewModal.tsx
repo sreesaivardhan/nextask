@@ -1,3 +1,4 @@
+import { Users , Lightbulb , Clock } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { socketService } from '../services/socketService';
@@ -112,50 +113,62 @@ export function TeamViewModal({ isOpen, onClose, boardId }: TeamViewModalProps) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-100 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <div className="px-6 py-4 border-b flex justify-between items-center bg-white">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            👥 Team View
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-surface rounded-2xl shadow-floating border border-strong w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border flex justify-between items-center shrink-0">
+          <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+            <Users className="w-5 h-5 text-primary-accent" /> Team View
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 font-bold text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-muted hover:text-primary font-bold text-xl leading-none w-8 h-8 flex items-center justify-center rounded-lg hover:bg-elevated transition-colors">&times;</button>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 flex flex-col md:flex-row gap-6">
           {loading && !data ? (
             <div className="flex justify-center items-center w-full py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
             </div>
           ) : data ? (
             <>
               {/* Left Column: Team Members & Stats */}
-              <div className="flex-1 space-y-6">
+              <div className="flex-1 space-y-6 min-w-0">
                 
-                {/* Team Stats */}
-                <div className="bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center">
-                  <div className="text-center px-4">
-                    <div className="text-sm text-gray-500 font-semibold uppercase">Total Assigned</div>
-                    <div className="text-2xl font-black text-gray-800">{data.teamStatistics.totalCardsAssigned}</div>
+                {/* Team Stats Summary */}
+                <div className="bg-elevated p-4 rounded-xl border border flex flex-wrap justify-between gap-4">
+                  <div className="text-center">
+                    <div className="text-[11px] text-muted font-bold uppercase tracking-wide mb-1">Total Assigned</div>
+                    <div className="text-2xl font-black text-primary">{data.teamStatistics.totalCardsAssigned}</div>
                   </div>
-                  <div className="text-center px-4 border-l">
-                    <div className="text-sm text-gray-500 font-semibold uppercase">Completion</div>
-                    <div className="text-2xl font-black text-blue-600">{data.teamStatistics.completionPercent.toFixed(1)}%</div>
+                  <div className="text-center">
+                    <div className="text-[11px] text-muted font-bold uppercase tracking-wide mb-1">Completion</div>
+                    <div className="text-2xl font-black text-primary-accent">{data.teamStatistics.completionPercent.toFixed(1)}%</div>
                   </div>
-                  <div className="text-center px-4 border-l">
-                    <div className="text-sm text-gray-500 font-semibold uppercase">Avg Complexity</div>
-                    <div className="text-2xl font-black text-purple-600">{data.teamStatistics.averageStoryPoints.toFixed(1)} SP</div>
+                  <div className="text-center">
+                    <div className="text-[11px] text-muted font-bold uppercase tracking-wide mb-1">Avg Complexity</div>
+                    <div className="text-2xl font-black text-primary">{data.teamStatistics.averageStoryPoints.toFixed(1)} <span className="text-base font-semibold text-muted">SP</span></div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[11px] text-muted font-bold uppercase tracking-wide mb-1">Completed</div>
+                    <div className="text-2xl font-black text-status-success">{data.teamStatistics.totalCardsCompleted}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[11px] text-muted font-bold uppercase tracking-wide mb-1">In Progress</div>
+                    <div className="text-2xl font-black text-status-warning">{data.teamStatistics.totalCardsInProgress}</div>
                   </div>
                 </div>
 
                 {/* AI Recommendations */}
                 {data.aiRecommendations.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                    <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
-                      💡 AI Workload Recommendations
+                  <div className="bg-surface border-l-2 border-l-primary border border rounded-xl p-4">
+                    <h3 className="font-bold text-primary flex items-center gap-2 mb-3 text-sm">
+                      <Lightbulb className="w-4 h-4 text-status-warning" /> AI Workload Recommendations
                     </h3>
-                    <ul className="list-disc pl-5 space-y-1 text-blue-900 text-sm">
+                    <ul className="space-y-2">
                       {data.aiRecommendations.map((rec, i) => (
-                        <li key={i}>{rec}</li>
+                        <li key={i} className="flex gap-2 text-sm text-secondary">
+                          <span className="text-primary-accent font-bold shrink-0 mt-0.5">&bull;</span>
+                          {rec}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -164,65 +177,72 @@ export function TeamViewModal({ isOpen, onClose, boardId }: TeamViewModalProps) 
                 {/* Team Members List */}
                 <div className="space-y-4">
                   {data.teamMembers.map(member => (
-                    <div key={member.userId} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
+                    <div key={member.userId} className="bg-surface p-5 rounded-xl shadow-subtle border border">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar — bg-primary/10 so text-primary-accent is legible */}
+                          <div className="w-11 h-11 rounded-full bg-primary/10 text-primary-accent flex items-center justify-center font-bold text-lg shrink-0">
                             {member.displayName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg text-gray-900">{member.displayName}</h3>
-                            <div className="text-xs text-gray-500 font-medium">{member.role} • {member.email}</div>
+                            <h3 className="font-bold text-primary">{member.displayName}</h3>
+                            <div className="text-xs text-muted">{member.role}{member.email ? ` · ${member.email}` : ''}</div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold text-gray-700">WIP: {member.currentWIP}</div>
-                          <div className="text-xs text-gray-500">Avg SP: {member.averageComplexity.toFixed(1)}</div>
+                        <div className="text-right shrink-0">
+                          <div className="text-sm font-semibold text-primary">WIP: {member.currentWIP}</div>
+                          <div className="text-xs text-muted">Avg SP: {member.averageComplexity.toFixed(1)}</div>
                         </div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-4 gap-4 text-center">
-                        <div className="bg-gray-50 p-2 rounded">
-                          <div className="text-xs text-gray-500">Assigned</div>
-                          <div className="font-bold">{member.assignedTasks}</div>
+                      {/* Task Stat Chips */}
+                      <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+                        <div className="bg-elevated p-2 rounded-lg">
+                          <div className="text-[11px] text-muted mb-0.5">Assigned</div>
+                          <div className="font-bold text-primary text-sm">{member.assignedTasks}</div>
                         </div>
-                        <div className="bg-green-50 p-2 rounded">
-                          <div className="text-xs text-green-600">Completed</div>
-                          <div className="font-bold text-green-700">{member.completedTasks}</div>
+                        <div className="bg-status-success/5 border border-status-success/20 p-2 rounded-lg">
+                          <div className="text-[11px] text-status-success mb-0.5">Done</div>
+                          <div className="font-bold text-status-success text-sm">{member.completedTasks}</div>
                         </div>
-                        <div className="bg-orange-50 p-2 rounded">
-                          <div className="text-xs text-orange-600">In Progress</div>
-                          <div className="font-bold text-orange-700">{member.inProgressTasks}</div>
+                        <div className="bg-status-warning/5 border border-status-warning/20 p-2 rounded-lg">
+                          <div className="text-[11px] text-status-warning mb-0.5">Active</div>
+                          <div className="font-bold text-status-warning text-sm">{member.inProgressTasks}</div>
                         </div>
-                        <div className="bg-red-50 p-2 rounded">
-                          <div className="text-xs text-red-600">Blocked</div>
-                          <div className="font-bold text-red-700">{member.blockedTasks}</div>
+                        <div className="bg-status-danger/5 border border-status-danger/20 p-2 rounded-lg">
+                          <div className="text-[11px] text-status-danger mb-0.5">Blocked</div>
+                          <div className="font-bold text-status-danger text-sm">{member.blockedTasks}</div>
                         </div>
                       </div>
 
-                      {/* Workload Bar */}
+                      {/* Completion Rate Bar */}
                       <div className="mt-4">
-                        <div className="flex justify-between text-xs font-semibold mb-1">
-                          <span className="text-gray-600">Completion Rate</span>
-                          <span className="text-blue-600">{member.completionRate.toFixed(1)}%</span>
+                        <div className="flex justify-between text-xs font-semibold mb-1.5">
+                          <span className="text-secondary">Completion Rate</span>
+                          <span className="text-primary-accent">{member.completionRate.toFixed(1)}%</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${Math.min(member.completionRate, 100)}%` }}></div>
+                        <div className="w-full bg-elevated rounded-full h-1.5">
+                          <div
+                            className="bg-primary h-1.5 rounded-full transition-all"
+                            style={{ width: `${Math.min(member.completionRate, 100)}%` }}
+                          ></div>
                         </div>
                       </div>
 
-                      {/* Specializations & Active */}
-                      <div className="mt-4 flex justify-between items-center text-xs">
-                        <div className="flex gap-2">
-                          <span className="text-gray-500 font-medium">Focus:</span>
+                      {/* Focus Labels & Last Active */}
+                      <div className="mt-4 flex justify-between items-center text-xs gap-2 flex-wrap">
+                        <div className="flex gap-1.5 flex-wrap">
+                          <span className="text-muted font-medium">Focus:</span>
                           {member.topLabels.length > 0 ? (
-                            member.topLabels.map(l => <span key={l} className="bg-gray-200 px-2 py-0.5 rounded text-gray-700">{l}</span>)
+                            member.topLabels.map(l => (
+                              <span key={l} className="bg-elevated px-2 py-0.5 rounded-md text-secondary border border">{l}</span>
+                            ))
                           ) : (
-                            <span className="text-gray-400">None</span>
+                            <span className="text-muted">None</span>
                           )}
                         </div>
                         {member.lastActive && (
-                          <div className="text-gray-400">
+                          <div className="text-muted shrink-0">
                             Active: {new Date(member.lastActive).toLocaleDateString()}
                           </div>
                         )}
@@ -233,13 +253,15 @@ export function TeamViewModal({ isOpen, onClose, boardId }: TeamViewModalProps) 
               </div>
 
               {/* Right Column: Activity Timeline */}
-              <div className="w-full md:w-80 bg-white rounded-lg shadow-sm border p-4 flex flex-col h-full md:max-h-[calc(100vh-12rem)]">
-                <h3 className="font-bold text-gray-800 mb-4 sticky top-0 bg-white">⏱️ Recent Activity</h3>
-                <div className="overflow-y-auto flex-1 pr-2 space-y-4">
+              <div className="w-full md:w-72 bg-surface rounded-xl shadow-subtle border border p-4 flex flex-col md:max-h-[calc(90vh-8rem)] shrink-0">
+                <h3 className="font-bold text-primary mb-4 flex items-center gap-2 text-sm sticky top-0 bg-surface pb-2 border-b border">
+                  <Clock className="w-4 h-4 text-primary-accent" /> Recent Activity
+                </h3>
+                <div className="overflow-y-auto flex-1 pr-1 space-y-3">
                   {data.activityTimeline.map(activity => (
-                    <div key={activity.id} className="text-sm border-l-2 border-blue-200 pl-3 py-1">
-                      <div className="font-semibold text-gray-700">{activity.user}</div>
-                      <div className="text-gray-600">
+                    <div key={activity.id} className="text-sm border-l-2 border-primary/20 pl-3 py-1">
+                      <div className="font-semibold text-primary text-xs">{activity.user}</div>
+                      <div className="text-secondary text-xs mt-0.5">
                         {activity.type === 'CARD_CREATED' && 'Created a card'}
                         {activity.type === 'CARD_UPDATED' && 'Updated a card'}
                         {activity.type === 'CARD_MOVED' && 'Moved a card'}
@@ -248,19 +270,19 @@ export function TeamViewModal({ isOpen, onClose, boardId }: TeamViewModalProps) 
                         {activity.type === 'MEMBER_JOINED' && 'Joined the board'}
                         {!['CARD_CREATED', 'CARD_UPDATED', 'CARD_MOVED', 'CARD_DELETED', 'GITHUB_IMPORT', 'MEMBER_JOINED'].includes(activity.type) && activity.type}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-[11px] text-muted mt-0.5">
                         {new Date(activity.createdAt).toLocaleString()}
                       </div>
                     </div>
                   ))}
                   {data.activityTimeline.length === 0 && (
-                    <div className="text-gray-500 text-sm text-center py-4">No recent activity.</div>
+                    <div className="text-muted text-sm text-center py-6">No recent activity.</div>
                   )}
                 </div>
               </div>
             </>
           ) : (
-            <div className="text-center w-full py-20 text-gray-500">Failed to load team analytics.</div>
+            <div className="text-center w-full py-20 text-muted">Failed to load team analytics.</div>
           )}
         </div>
       </div>

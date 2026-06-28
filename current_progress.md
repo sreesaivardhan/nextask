@@ -20,13 +20,12 @@
 | Weekly Digest                                              | ✅      |
 | Team View                                                  | ✅      |
 | Dashboard Analytics                                        | ✅      |
-| **Google OAuth**                                           | ❌      |
-| **GitHub OAuth**                                           | ❌      |
-| **ui improvements and css changes**                        | ❌      |
-| **forgot pass word setup and deploy repo cleanup**         | ❌      |
+| UI improvements and css changes                            | ✅      |
+| **forgot pass word setup and GitHub OAuth, Google OAuth**  | ❌      |
+| **deploy repo cleanup**                                    | ❌      |
+| **README**                                                 | ❌      |
 | **Railway Deployment**                                     | ❌      |
 | **10 simultaneous users Documentation**                    | ❌      |
-| **README**                                                 | ❌      |
 | **Demo Video**                                             | ❌      |
 
 

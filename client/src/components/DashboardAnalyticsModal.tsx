@@ -1,3 +1,4 @@
+import { BarChart3 , BrainCircuit } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { socketService } from '../services/socketService';
@@ -39,7 +40,16 @@ interface AnalyticsData {
   };
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+// Semantic palette anchored to CSS vars — readable in both light/dark
+const CHART_COLORS = [
+  'var(--accent-primary)',
+  'var(--status-success)',
+  'var(--status-warning)',
+  'var(--status-danger)',
+  'var(--status-info)',
+  '#8884d8',
+  '#82ca9d',
+];
 
 export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardAnalyticsModalProps) {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -82,7 +92,6 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
     if (!socket) return;
 
     const refetch = () => {
-      // Quietly refetch without setting loading=true to prevent UI flashes
       fetchAnalytics();
     };
 
@@ -106,94 +115,98 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            📈 Dashboard Analytics
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-surface rounded-2xl shadow-floating w-full max-w-6xl max-h-[90vh] flex flex-col border border-strong">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border flex justify-between items-center shrink-0">
+          <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-primary-accent" /> Dashboard Analytics
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 font-bold text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-muted hover:text-primary font-bold text-xl leading-none w-8 h-8 flex items-center justify-center rounded-lg hover:bg-elevated transition-colors">&times;</button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 bg-gray-50">
+        <div className="p-6 overflow-y-auto flex-1">
           {loading && !data ? (
             <div className="flex justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
             </div>
           ) : data ? (
             <div className="space-y-8">
-              {/* Overview Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard title="Total Cards" value={data.overview.totalCards} color="bg-gray-100" textColor="text-gray-800" />
-                <StatCard title="Completion %" value={`${data.overview.completionPercent.toFixed(1)}%`} color="bg-blue-100" textColor="text-blue-800" />
-                <StatCard title="Velocity" value={`${data.overview.currentVelocity.toFixed(1)} / day`} color="bg-green-100" textColor="text-green-800" />
-                <StatCard title="Avg Complexity" value={`${data.overview.averageComplexity.toFixed(1)} SP`} color="bg-purple-100" textColor="text-purple-800" />
-                
-                <StatCard title="To Do" value={data.overview.todoCards} color="bg-yellow-100" textColor="text-yellow-800" />
-                <StatCard title="In Progress" value={data.overview.inProgressCards} color="bg-orange-100" textColor="text-orange-800" />
-                <StatCard title="Completed" value={data.overview.completedCards} color="bg-emerald-100" textColor="text-emerald-800" />
-                <StatCard title="Blocked" value={data.overview.blockedCards} color="bg-red-100" textColor="text-red-800" />
+              {/* Overview Cards — neutral bg, accent is only border/label */}
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted mb-3">Overview</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <StatCard title="Total Cards" value={data.overview.totalCards} accentColor="border-l-primary" />
+                  <StatCard title="Completion" value={`${data.overview.completionPercent.toFixed(1)}%`} accentColor="border-l-status-success" />
+                  <StatCard title="Velocity" value={`${data.overview.currentVelocity.toFixed(1)}/day`} accentColor="border-l-status-info" />
+                  <StatCard title="Avg Complexity" value={`${data.overview.averageComplexity.toFixed(1)} SP`} accentColor="border-l-primary" />
+
+                  <StatCard title="To Do" value={data.overview.todoCards} accentColor="border-l-elevated" />
+                  <StatCard title="In Progress" value={data.overview.inProgressCards} accentColor="border-l-status-warning" />
+                  <StatCard title="Completed" value={data.overview.completedCards} accentColor="border-l-status-success" />
+                  <StatCard title="Blocked" value={data.overview.blockedCards} accentColor="border-l-status-danger" />
+                </div>
               </div>
 
               {/* Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-4 rounded-lg shadow border">
-                  <h3 className="font-bold text-gray-700 mb-4">Cards per Column</h3>
-                  <div className="h-64">
+                <div className="bg-surface p-4 rounded-xl shadow-subtle border border">
+                  <h3 className="font-semibold text-primary mb-4 text-sm">Cards per Column</h3>
+                  <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data.charts.cardsPerColumn}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Bar dataKey="count" fill="#3b82f6" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                        <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                        <RechartsTooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                        <Bar dataKey="count" fill="var(--accent-primary)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow border">
-                  <h3 className="font-bold text-gray-700 mb-4">Velocity Trend (Weekly)</h3>
-                  <div className="h-64">
+                <div className="bg-surface p-4 rounded-xl shadow-subtle border border">
+                  <h3 className="font-semibold text-primary mb-4 text-sm">Velocity Trend (Weekly)</h3>
+                  <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={data.charts.velocityTrend}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Area type="monotone" dataKey="velocity" stroke="#10b981" fill="#d1fae5" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                        <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                        <RechartsTooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                        <Area type="monotone" dataKey="velocity" stroke="var(--status-success)" fill="var(--status-success)" fillOpacity={0.12} strokeWidth={2} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow border">
-                  <h3 className="font-bold text-gray-700 mb-4">Workload Distribution</h3>
-                  <div className="h-64">
+                <div className="bg-surface p-4 rounded-xl shadow-subtle border border">
+                  <h3 className="font-semibold text-primary mb-4 text-sm">Workload Distribution</h3>
+                  <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data.charts.workloadDistribution} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="name" type="category" width={100} />
-                        <RechartsTooltip />
-                        <Bar dataKey="count" fill="#8b5cf6" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                        <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                        <YAxis dataKey="name" type="category" width={90} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                        <RechartsTooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                        <Bar dataKey="count" fill="var(--status-info)" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow border flex flex-col">
-                  <h3 className="font-bold text-gray-700 mb-4">Complexity Distribution</h3>
-                  <div className="h-64 flex-1">
+                <div className="bg-surface p-4 rounded-xl shadow-subtle border border flex flex-col">
+                  <h3 className="font-semibold text-primary mb-4 text-sm">Complexity Distribution</h3>
+                  <div className="h-56 flex-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={data.charts.complexityDistribution} cx="50%" cy="50%" outerRadius={80} dataKey="value" label>
+                        <Pie data={data.charts.complexityDistribution} cx="50%" cy="50%" outerRadius={75} dataKey="value" label>
                           {data.charts.complexityDistribution.map((_entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                           ))}
                         </Pie>
-                        <RechartsTooltip />
-                        <Legend />
+                        <RechartsTooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                        <Legend formatter={(value) => <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{value}</span>} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -201,51 +214,61 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
               </div>
 
               {/* AI Summary */}
-              <div className="bg-white p-6 rounded-lg shadow border">
-                <h3 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">🤖 AI Summary & Recommendations</h3>
+              <div className="bg-surface p-6 rounded-xl shadow-subtle border border">
+                <h3 className="font-bold text-primary text-base mb-4 flex items-center gap-2">
+                  <BrainCircuit className="w-5 h-5 text-primary-accent" /> AI Summary & Recommendations
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold text-gray-600 mb-2">Board Health</h4>
+                    <h4 className="font-semibold text-secondary mb-3 text-sm">Board Health</h4>
                     <ul className="space-y-2 text-sm">
-                      <li className="flex justify-between py-1 border-b">
-                        <span className="text-gray-500">Top Blocked Column:</span>
-                        <span className="font-medium">{data.aiSummary.topBlockedColumn}</span>
+                      <li className="flex justify-between py-2 border-b border">
+                        <span className="text-muted">Top Blocked Column</span>
+                        <span className="font-semibold text-primary">{data.aiSummary.topBlockedColumn}</span>
                       </li>
-                      <li className="flex justify-between py-1 border-b">
-                        <span className="text-gray-500">Highest WIP Column:</span>
-                        <span className="font-medium">{data.aiSummary.highestWIPColumn}</span>
+                      <li className="flex justify-between py-2 border-b border">
+                        <span className="text-muted">Highest WIP Column</span>
+                        <span className="font-semibold text-primary">{data.aiSummary.highestWIPColumn}</span>
                       </li>
                       {data.aiSummary.sprintRisk && (
-                        <li className="flex justify-between py-1 border-b">
-                          <span className="text-gray-500">Sprint Risk Level:</span>
-                          <span className="font-bold text-red-600">
+                        <li className="flex justify-between py-2 border-b border">
+                          <span className="text-muted">Sprint Risk Level</span>
+                          <span className="font-bold text-status-danger">
                             {(data.aiSummary.sprintRisk as { risk: string }).risk} 
-                            ({(data.aiSummary.sprintRisk as { completionConfidence: number }).completionConfidence}% confidence)
+                            {' '}({(data.aiSummary.sprintRisk as { completionConfidence: number }).completionConfidence}% confidence)
                           </span>
                         </li>
                       )}
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-600 mb-2">Recent Insights</h4>
-                    {data.aiSummary.bottleneck && (
-                      <div className="bg-orange-50 border border-orange-100 p-3 rounded text-sm mb-3 text-orange-800">
-                        <strong>Bottleneck Detected:</strong> Reduce WIP in {(data.aiSummary.bottleneck as { column: string }).column}.
-                      </div>
-                    )}
-                    {data.aiSummary.latestDigest && (
-                      <div className="bg-purple-50 border border-purple-100 p-3 rounded text-sm text-purple-800">
-                        <strong>Weekly Digest:</strong> Trend is {(data.aiSummary.latestDigest as { velocityTrend: string }).velocityTrend}. 
-                        Velocity: {(data.aiSummary.latestDigest as { currentVelocity: number }).currentVelocity.toFixed(1)}.
-                      </div>
-                    )}
+                    <h4 className="font-semibold text-secondary mb-3 text-sm">Recent Insights</h4>
+                    <div className="space-y-2">
+                      {data.aiSummary.bottleneck && (
+                        <div className="bg-status-warning/5 border border-status-warning/20 p-3 rounded-xl text-sm">
+                          <p className="text-primary font-semibold mb-0.5">Bottleneck Detected</p>
+                          <p className="text-secondary">Reduce WIP in <strong>{(data.aiSummary.bottleneck as { column: string }).column}</strong>.</p>
+                        </div>
+                      )}
+                      {data.aiSummary.latestDigest && (
+                        <div className="bg-elevated border border p-3 rounded-xl text-sm">
+                          <p className="text-primary font-semibold mb-0.5">Weekly Digest</p>
+                          <p className="text-secondary">
+                            Trend is <strong>{(data.aiSummary.latestDigest as { velocityTrend: string }).velocityTrend}</strong>. 
+                            {' '}Velocity: {(data.aiSummary.latestDigest as { currentVelocity: number }).currentVelocity.toFixed(1)}.
+                          </p>
+                        </div>
+                      )}
+                      {!data.aiSummary.bottleneck && !data.aiSummary.latestDigest && (
+                        <p className="text-muted text-sm italic">No recent AI insights available.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-
             </div>
           ) : (
-            <div className="text-center py-20 text-gray-500">Failed to load analytics.</div>
+            <div className="text-center py-20 text-muted">Failed to load analytics.</div>
           )}
         </div>
       </div>
@@ -253,11 +276,12 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
   );
 }
 
-function StatCard({ title, value, color, textColor }: { title: string, value: string | number, color: string, textColor: string }) {
+// StatCard — neutral bg, readable text, coloured left border accent only
+function StatCard({ title, value, accentColor }: { title: string; value: string | number; accentColor: string }) {
   return (
-    <div className={`${color} p-4 rounded-lg shadow-sm border border-black/5`}>
-      <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${textColor} opacity-70`}>{title}</div>
-      <div className={`text-2xl font-black ${textColor}`}>{value}</div>
+    <div className={`bg-surface p-4 rounded-xl shadow-subtle border-l-2 border border ${accentColor}`}>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">{title}</div>
+      <div className="text-2xl font-black text-primary">{value}</div>
     </div>
   );
 }
