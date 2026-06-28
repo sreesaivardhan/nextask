@@ -18,7 +18,7 @@ export class CardService {
     boardId: string,
     columnId: string,
     userId: string,
-    data: { title: string; description?: string; complexity?: number; assigneeId?: string }
+    data: { title: string; description?: string; complexity?: number; assigneeId?: string; creationSource?: string; referenceUrl?: string }
   ): Promise<Card> {
     await authzService.requireBoardRole(boardId, userId, ['OWNER', 'ADMIN', 'MEMBER']);
 
@@ -32,9 +32,7 @@ export class CardService {
       throw new Error('Invalid card title');
     }
 
-    if (data.description && data.description.length > 5000) {
-      throw new Error('Description too long');
-    }
+
 
     const board = await boardRepository.findById(boardId);
     if (data.complexity) {
@@ -51,6 +49,11 @@ export class CardService {
       }
     }
 
+    let finalDescription = data.description;
+    if (finalDescription && finalDescription.length > 5000) {
+      finalDescription = finalDescription.substring(0, 5000);
+    }
+    
     const maxPos = await cardRepository.getMaxPosition(columnId);
     const position = maxPos + 65535;
 
@@ -59,12 +62,16 @@ export class CardService {
       columnId,
       title: trimmedTitle,
       position,
-      description: data.description,
+      description: finalDescription,
       complexity: data.complexity,
       assigneeId: data.assigneeId,
     });
 
-    await activityLogService.log(boardId, userId, 'CARD_CREATED', 'Card', card.id, { title: card.title });
+    await activityLogService.log(boardId, userId, 'CARD_CREATED', 'Card', card.id, { 
+      title: card.title,
+      creationSource: data.creationSource,
+      referenceUrl: data.referenceUrl
+    });
 
     // Asynchronously trigger AI complexity inference (fire-and-forget)
     inferCardComplexity(card.id).catch(console.error);

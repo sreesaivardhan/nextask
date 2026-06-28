@@ -26,12 +26,14 @@ export class CardController {
   async createCard(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
-      const { boardId, columnId, title, description, complexity, assigneeId } = req.body;
+      const { boardId, columnId, title, description, complexity, assigneeId, creationSource, referenceUrl } = req.body;
       const card = await cardService.createCard(boardId, columnId, userId, {
         title,
         description,
         complexity,
         assigneeId,
+        creationSource,
+        referenceUrl,
       });
       res.status(201).json(card);
       const socketId = senderSocketId(req);

@@ -12,14 +12,14 @@
 | Board Settings                                             | ✅      |
 | Last-write-wins Conflict Handling                          | ✅      |
 | Conflict Notification                                      | ✅      |
+| Email Authentication                                       | ✅      |
 | Multi-user Board Collaboration (Invites/Board Members)     | ✅      |
 | Task Complexity Inference                                  | ✅      |
-| **GitHub Issues Import**                                   | ❌      |
+| GitHub Issues Import                                       | ✅      |
 | **Chrome Extension**                                       | ❌      |
 | **Weekly Digest**                                          | ❌      |
 | **Team View**                                              | ❌      |
 | **Dashboard Analytics**                                    | ❌      |
-| Email Authentication                                       | ✅      |
 | **Google OAuth**                                           | ❌      |
 | **GitHub OAuth**                                           | ❌      |
 | **ui improvements and css changes**                        | ❌      |

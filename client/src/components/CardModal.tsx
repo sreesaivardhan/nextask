@@ -497,6 +497,20 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                               </div>
                             </div>
                           );
+                        } else if (m.creationSource === 'Chrome Extension') {
+                          description = (
+                            <div className="flex flex-col gap-1.5 mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 w-full max-w-sm shadow-sm">
+                              <span className="font-semibold text-gray-900 flex items-center gap-2">
+                                <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                                Created from Chrome Extension
+                              </span>
+                              {m.referenceUrl && (
+                                <div className="flex flex-col gap-1 mt-1 text-xs">
+                                  <span className="flex items-start gap-1"><span className="font-medium text-gray-500 shrink-0">Source:</span> <a href={String(m.referenceUrl)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">{String(m.referenceUrl)}</a></span>
+                                </div>
+                              )}
+                            </div>
+                          );
                         } else {
                           description = 'created this card';
                         }
