@@ -8,6 +8,7 @@ import { activityLogRouter } from './activityLog.routes';
 import { authRouter } from './auth.routes';
 import { userRouter } from './user.routes';
 import { aiRouter } from './ai.routes';
+import { analyticsRouter } from './analytics.routes';
 
 export const apiRouter = Router();
 
@@ -20,3 +21,4 @@ apiRouter.use('/', cardRouter);
 apiRouter.use('/', commentRouter);
 apiRouter.use('/', activityLogRouter);
 apiRouter.use('/ai', aiRouter);
+apiRouter.use('/analytics', analyticsRouter);

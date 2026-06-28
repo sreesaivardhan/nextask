@@ -13,6 +13,8 @@ import { AIInsightsPanel } from '../components/AIInsightsPanel';
 import { GitHubImportModal } from '../components/GitHubImportModal';
 import { ShareModal } from '../components/ShareModal';
 import { WeeklyDigestModal } from '../components/WeeklyDigestModal';
+import { DashboardAnalyticsModal } from '../components/DashboardAnalyticsModal';
+import { TeamViewModal } from '../components/TeamViewModal';
 import { useBoardMemberStore } from '../stores/boardMemberStore';
 import { socketService } from '../services/socketService';
 import { useSessionStore } from '../stores/sessionStore';
@@ -69,6 +71,8 @@ export function BoardPage(): React.ReactElement {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
   const [isDigestModalOpen, setIsDigestModalOpen] = useState(false);
+  const [isDashboardModalOpen, setIsDashboardModalOpen] = useState(false);
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
 
   const board = boards.find((b) => b.id === boardId);
   const boardMembers = boardId ? boardMemberMap[boardId] || [] : [];
@@ -581,6 +585,18 @@ export function BoardPage(): React.ReactElement {
             </button>
           )}
           <button
+            onClick={() => setIsTeamModalOpen(true)}
+            className="bg-teal-100 text-teal-700 px-4 py-1.5 rounded font-medium text-sm hover:bg-teal-200 flex items-center gap-2"
+          >
+            👥 Team
+          </button>
+          <button
+            onClick={() => setIsDashboardModalOpen(true)}
+            className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded font-medium text-sm hover:bg-indigo-200 flex items-center gap-2"
+          >
+            📈 Dashboard
+          </button>
+          <button
             onClick={() => setIsDigestModalOpen(true)}
             className="bg-purple-100 text-purple-700 px-4 py-1.5 rounded font-medium text-sm hover:bg-purple-200 flex items-center gap-2"
           >
@@ -715,6 +731,20 @@ export function BoardPage(): React.ReactElement {
           isOpen={isDigestModalOpen}
           onClose={() => setIsDigestModalOpen(false)}
           canGenerate={canManageBoard || canManageMembers}
+        />
+      )}
+      {boardId && (
+        <DashboardAnalyticsModal
+          boardId={boardId}
+          isOpen={isDashboardModalOpen}
+          onClose={() => setIsDashboardModalOpen(false)}
+        />
+      )}
+      {boardId && (
+        <TeamViewModal
+          boardId={boardId}
+          isOpen={isTeamModalOpen}
+          onClose={() => setIsTeamModalOpen(false)}
         />
       )}
       <ConfirmDialog

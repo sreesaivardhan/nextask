@@ -18,8 +18,8 @@
 | GitHub Issues Import                                       | ✅      |
 | Chrome Extension                                           | ✅      |
 | Weekly Digest                                              | ✅      |
-| **Team View**                                              | ❌      |
-| **Dashboard Analytics**                                    | ❌      |
+| Team View                                                  | ✅      |
+| Dashboard Analytics                                        | ✅      |
 | **Google OAuth**                                           | ❌      |
 | **GitHub OAuth**                                           | ❌      |
 | **ui improvements and css changes**                        | ❌      |
