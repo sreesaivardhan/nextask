@@ -9,6 +9,7 @@ export interface User {
   createdAt: string;
   email?: string | null;
   emailVerified?: boolean;
+  authProvider?: string;
 }
 
 interface SessionStore {
@@ -37,7 +38,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   },
   checkSession: async () => {
     try {
-      const user = await api.get('/auth/me');
+      const user = await api.get(`/auth/me?t=${Date.now()}`);
       set({ user, isLoading: false, error: null });
       if (user) {
         socketService.connect();

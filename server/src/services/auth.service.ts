@@ -4,6 +4,11 @@ import { User, Session, AuthProvider } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 export class AuthService {
+  private async createSessionForUser(userId: string): Promise<Session> {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    return sessionRepository.create(userId, expiresAt);
+  }
+
   async register(displayName: string, email: string, password: string):Promise<{user: User, session: Session}> {
     const trimmedName = displayName.trim();
     if (!trimmedName || trimmedName.length > 50) {
@@ -34,8 +39,7 @@ export class AuthService {
       authProvider: AuthProvider.LOCAL,
     });
 
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    const session = await sessionRepository.create(user.id, expiresAt);
+    const session = await this.createSessionForUser(user.id);
 
     return { user, session };
   }
@@ -53,8 +57,34 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
 
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    const session = await sessionRepository.create(user.id, expiresAt);
+    const session = await this.createSessionForUser(user.id);
+
+    return { user, session };
+  }
+
+  async handleOAuthLogin(
+    email: string,
+    displayName: string,
+    authProvider: AuthProvider,
+    githubUsername?: string
+  ): Promise<{ user: User; session: Session }> {
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    let user = await userRepository.findByEmail(trimmedEmail);
+    
+    if (!user) {
+      user = await userRepository.createOAuthUser({
+        email: trimmedEmail,
+        displayName: displayName || email.split('@')[0],
+        authProvider,
+        githubUsername,
+      });
+    } else if (authProvider === AuthProvider.GITHUB && githubUsername && !user.githubUsername) {
+      // Opportunistically link github username if not present
+      user = await userRepository.linkGithubUsername(user.id, githubUsername);
+    }
+
+    const session = await this.createSessionForUser(user.id);
 
     return { user, session };
   }

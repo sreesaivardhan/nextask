@@ -4,6 +4,7 @@ declare module 'express-session' {
   interface SessionData {
     sessionId: string;
     userId: string;
+    oauthState?: string;
   }
 }
 

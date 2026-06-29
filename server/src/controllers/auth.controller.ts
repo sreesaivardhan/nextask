@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/auth.service';
 import { sessionService } from '../services/session.service';
+import { oauthService } from '../services/oauth.service';
+import { AuthProvider } from '@prisma/client';
+import crypto from 'crypto';
+import { logger } from '../utils/logger';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -125,6 +129,101 @@ export class AuthController {
         return;
       }
       next(error);
+    }
+  }
+
+  async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const state = crypto.randomBytes(32).toString('hex');
+      req.session.oauthState = state;
+      const url = oauthService.getGoogleAuthUrl(state);
+      res.redirect(url);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async googleCallback(req: Request, res: Response, _next: NextFunction): Promise<void> {
+    try {
+      const { code, state } = req.query;
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+      if (!state || typeof state !== 'string' || state !== req.session.oauthState) {
+        logger.error('Invalid or missing Google OAuth state parameter');
+        res.redirect(`${clientUrl}/login?error=Invalid+OAuth+state`);
+        return;
+      }
+      delete req.session.oauthState;
+
+      if (!code || typeof code !== 'string') {
+        res.redirect(`${clientUrl}/login?error=Invalid+Google+OAuth+code`);
+        return;
+      }
+
+      const googleUser = await oauthService.getGoogleUserFromCode(code);
+      
+      const { user, session } = await authService.handleOAuthLogin(
+        googleUser.email,
+        googleUser.name,
+        AuthProvider.GOOGLE
+      );
+
+      req.session.sessionId = session.id;
+      req.session.userId = user.id;
+
+      res.redirect(`${clientUrl}/dashboard`);
+    } catch (error) {
+      logger.error('Google OAuth error:', error);
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      res.redirect(`${clientUrl}/login?error=Google+login+failed`);
+    }
+  }
+
+  async githubAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const state = crypto.randomBytes(32).toString('hex');
+      req.session.oauthState = state;
+      const url = oauthService.getGithubAuthUrl(state);
+      res.redirect(url);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async githubCallback(req: Request, res: Response, _next: NextFunction): Promise<void> {
+    try {
+      const { code, state } = req.query;
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+      if (!state || typeof state !== 'string' || state !== req.session.oauthState) {
+        logger.error('Invalid or missing GitHub OAuth state parameter');
+        res.redirect(`${clientUrl}/login?error=Invalid+OAuth+state`);
+        return;
+      }
+      delete req.session.oauthState;
+
+      if (!code || typeof code !== 'string') {
+        res.redirect(`${clientUrl}/login?error=Invalid+GitHub+OAuth+code`);
+        return;
+      }
+
+      const githubUser = await oauthService.getGithubUserFromCode(code);
+      
+      const { user, session } = await authService.handleOAuthLogin(
+        githubUser.email,
+        githubUser.name,
+        AuthProvider.GITHUB,
+        githubUser.username
+      );
+
+      req.session.sessionId = session.id;
+      req.session.userId = user.id;
+
+      res.redirect(`${clientUrl}/dashboard`);
+    } catch (error) {
+      logger.error('GitHub OAuth error:', error);
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      res.redirect(`${clientUrl}/login?error=GitHub+login+failed`);
     }
   }
 }

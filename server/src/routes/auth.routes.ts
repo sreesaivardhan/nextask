@@ -9,3 +9,8 @@ authRouter.post('/login', authController.login);
 authRouter.post('/logout', authController.logout);
 authRouter.get('/me', authController.me);
 authRouter.put('/profile', requireSession, authController.updateProfile);
+authRouter.get('/google', authController.googleAuth);
+authRouter.get('/google/callback', authController.googleCallback);
+
+authRouter.get('/github', authController.githubAuth);
+authRouter.get('/github/callback', authController.githubCallback);

@@ -36,6 +36,25 @@ export class UserRepository {
     });
   }
 
+  async createOAuthUser(data: { displayName: string; email: string; authProvider: AuthProvider; githubUsername?: string }): Promise<User> {
+    return prisma.user.create({
+      data: {
+        displayName: data.displayName,
+        email: data.email,
+        authProvider: data.authProvider,
+        githubUsername: data.githubUsername,
+        emailVerified: true,
+      },
+    });
+  }
+
+  async linkGithubUsername(id: string, githubUsername: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { githubUsername },
+    });
+  }
+
   async updateDisplayName(id: string, displayName: string): Promise<User> {
     return prisma.user.update({
       where: { id },

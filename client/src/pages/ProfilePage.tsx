@@ -96,7 +96,7 @@ export function ProfilePage(): React.ReactElement {
                 <dt className="text-sm font-medium text-muted flex items-center">Authentication Provider</dt>
                 <dd className="mt-1 text-sm text-primary sm:mt-0 sm:col-span-2 flex items-center">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-elevated text-primary border border">
-                    LOCAL
+                    {user.authProvider || 'LOCAL'}
                   </span>
                 </dd>
               </div>
