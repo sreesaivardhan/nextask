@@ -1,7 +1,7 @@
 import { socketService } from './socketService';
 import { useSessionStore } from '../stores/sessionStore';
 
-const API_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export const api = {
   get: async (endpoint: string) => request(endpoint, { method: 'GET' }),
@@ -26,7 +26,7 @@ async function request(endpoint: string, options: RequestInit) {
     'X-Socket-Id': socketId,
     ...options.headers,
   };
-  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers, credentials: 'include' });
+  const response = await fetch(`${API_BASE_URL}/api${endpoint}`, { ...options, headers, credentials: 'include' });
 
   if (response.status === 401) {
     if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
