@@ -31,6 +31,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
   const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const boardMembers = card ? (members[card.boardId] || []) : [];
+  const currentUserRole = boardMembers.find(m => m.userId === user?.id)?.role;
 
   const [activeTab, setActiveTab] = useState<'details' | 'comments' | 'history'>('details');
 
@@ -442,7 +443,7 @@ export function CardModal({ card, isOpen, onClose, boardId, boardComplexityMax =
                           <span className="text-xs text-muted">{new Date(comment.createdAt).toLocaleString()}</span>
                         </div>
                         <p className="text-sm text-secondary whitespace-pre-wrap">{comment.body}</p>
-                        {canComment && (
+                        {(comment.userId === user?.id || currentUserRole === 'OWNER') && (
                           <button 
                             onClick={() => deleteComment(comment.id, snapshotCard.id, snapshotCard.boardId)}
                             className="text-xs text-status-danger hover:text-status-danger mt-2"

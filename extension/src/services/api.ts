@@ -3,10 +3,11 @@ import axios from 'axios';
 // During development, assume the NexTask server runs on localhost:3001
 // and the React frontend runs on localhost:5173.
 // In production, these would be environment variables or resolved from storage.
-export const API_BASE_URL = 'http://localhost:3001/api';
-export const WEB_APP_URL = 'http://localhost:5173';
+export const BACKEND_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3001';
+export const WEB_APP_URL = (import.meta.env.VITE_WEB_APP_URL as string | undefined) ?? 'http://localhost:5173';
+
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${BACKEND_URL}/api`,
   withCredentials: true, // Crucial for using existing session cookies
 });
 
@@ -16,7 +17,7 @@ export const api = axios.create({
 api.interceptors.request.use(async (config) => {
   if (typeof chrome !== 'undefined' && chrome.cookies) {
     try {
-      const cookie = await chrome.cookies.get({ url: API_BASE_URL, name: 'connect.sid' });
+      const cookie = await chrome.cookies.get({ url: BACKEND_URL, name: 'connect.sid' });
       if (cookie) {
         config.headers['X-Extension-Session'] = cookie.value;
       }

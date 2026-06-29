@@ -33,8 +33,12 @@ export class CommentService {
       throw new Error('Comment not found');
     }
 
-    // Usually only author can delete, but let's allow it as we don't have strict roles defined for comments deletion in prompt.
-    // The prompt: "Comments belong to cards. Use existing session user."
+    const role = await authzService.getMemberRole(boardId, userId);
+    
+    if (comment.userId !== userId && role !== 'OWNER') {
+      throw new Error('Unauthorized access to board');
+    }
+
     await commentRepository.delete(commentId);
   }
 }
