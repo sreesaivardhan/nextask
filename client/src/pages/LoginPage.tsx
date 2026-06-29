@@ -16,6 +16,8 @@ const EyeOffIcon = () => (
   </svg>
 );
 
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+
 export function LoginPage(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -148,7 +150,7 @@ export function LoginPage(): React.ReactElement {
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => window.location.href = '/api/auth/google'}
+                onClick={() => window.location.href = `${API_BASE_URL}/api/auth/google`}
                 className="w-full flex justify-center items-center py-2.5 px-4 border border-strong rounded-lg shadow-subtle text-sm font-medium text-primary bg-elevated hover:bg-surface focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -161,7 +163,7 @@ export function LoginPage(): React.ReactElement {
               </button>
               <button
                 type="button"
-                onClick={() => window.location.href = '/api/auth/github'}
+                onClick={() => window.location.href = `${API_BASE_URL}/api/auth/github`}
                 className="w-full flex justify-center items-center py-2.5 px-4 border border-strong rounded-lg shadow-subtle text-sm font-medium text-primary bg-elevated hover:bg-surface focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150"
               >
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
