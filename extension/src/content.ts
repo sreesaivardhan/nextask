@@ -5,6 +5,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const selection = window.getSelection();
     let text = selection ? selection.toString() : '';
     
+    // Fallback for inputs/textareas
+    if (!text && document.activeElement) {
+      const el = document.activeElement as any;
+      if ((el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') && el.selectionStart !== undefined) {
+        text = el.value.substring(el.selectionStart, el.selectionEnd);
+      }
+    }
+    
     // Trim intelligently if too long (e.g. 5000 chars)
     if (text.length > 5000) {
       text = text.substring(0, 5000);
