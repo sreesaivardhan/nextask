@@ -27,5 +27,6 @@
 | **Railway Deployment**                                     | ❌      |
 | **10 simultaneous users Documentation**                    | ❌      |
 | **Demo Video**                                             | ❌      |
+| **Board Templates**                                        | ❌      |
 
 

@@ -157,8 +157,8 @@ export default function Popup() {
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center h-48">
-        <Loader2 className="w-8 h-8 text-accent animate-spin" />
-        <span className="mt-2 text-sm text-textMuted">Loading NexTask...</span>
+        <Loader2 className="w-8 h-8 text-brand animate-spin" />
+        <span className="mt-2 text-sm text-text-muted">Loading NexTask...</span>
       </div>
     );
   }
@@ -166,14 +166,14 @@ export default function Popup() {
   if (status === 'unauthenticated') {
     return (
       <div className="flex flex-col items-center justify-center h-48 px-6 text-center">
-        <div className="w-12 h-12 bg-surface-elevated rounded-full flex items-center justify-center mb-3">
-          <AlertCircle className="w-6 h-6 text-textMuted" />
+        <div className="w-12 h-12 bg-elevated rounded-full flex items-center justify-center mb-3">
+          <AlertCircle className="w-6 h-6 text-text-muted" />
         </div>
-        <h2 className="text-textPrimary font-semibold mb-1">Not Authenticated</h2>
-        <p className="text-sm text-textMuted mb-4">You are not logged in to NexTask.</p>
+        <h2 className="text-text-primary font-semibold mb-1">Not Authenticated</h2>
+        <p className="text-sm text-text-muted mb-4">You are not logged in to NexTask.</p>
         <button
           onClick={() => window.open(`${WEB_APP_URL}/login`, '_blank')}
-          className="flex items-center gap-2 px-4 py-2 bg-accent text-[#131313] rounded-[12px] text-sm font-medium hover:bg-accent-hover text-[#131313] dark:text-[#131313] text-white dark:text-[#131313] transition"
+          className="flex items-center gap-2 px-4 py-2 bg-brand text-text-inverse rounded-xl text-sm font-medium hover:bg-brand-hover transition"
         >
           <LogIn className="w-4 h-4" />
           Open NexTask
@@ -185,8 +185,8 @@ export default function Popup() {
   if (status === 'error') {
     return (
       <div className="flex flex-col items-center justify-center h-48 px-6 text-center">
-        <AlertCircle className="w-8 h-8 text-danger mb-2" />
-        <p className="text-sm text-danger">{errorMsg}</p>
+        <AlertCircle className="w-8 h-8 text-status-danger mb-2" />
+        <p className="text-sm text-status-danger">{errorMsg}</p>
       </div>
     );
   }
@@ -194,26 +194,26 @@ export default function Popup() {
   if (status === 'success') {
     return (
       <div className="flex flex-col items-center justify-center h-48 px-6 text-center animate-in fade-in zoom-in duration-300">
-        <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mb-4">
-          <svg className="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-16 h-16 bg-status-success/10 border border-status-success/20 rounded-full flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-status-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-textPrimary font-bold text-lg">Task Created!</h2>
+        <h2 className="text-text-primary font-bold text-lg">Task Created!</h2>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full">
-      <header className="px-4 py-3 border-b border-subtle bg-surface flex items-center justify-between sticky top-0 z-10">
+      <header className="px-4 py-3 border-b border-border-subtle bg-surface flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-accent text-[#131313] rounded-[8px] flex items-center justify-center">
-            <span className="text-textPrimary text-xs font-bold">N</span>
+          <div className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center">
+            <span className="text-brand text-xs font-bold">N</span>
           </div>
-          <span className="font-semibold text-textPrimary">NexTask</span>
+          <span className="font-semibold text-text-primary">NexTask</span>
         </div>
-        <div className="text-xs text-textMuted truncate max-w-[120px]" title={user?.email}>
+        <div className="text-xs text-text-muted truncate max-w-[120px]" title={user?.email}>
           {user?.displayName || user?.email}
         </div>
       </header>
@@ -221,10 +221,10 @@ export default function Popup() {
       <main className="p-4 flex flex-col gap-4">
         {/* Title */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-textSecondary">Task Title</label>
+          <label className="text-xs font-medium text-text-secondary">Task Title</label>
           <input
             type="text"
-            className="w-full px-3 py-2 border border-divider rounded-[12px] text-sm focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+            className="w-full px-3 py-2 border border-border-strong rounded-xl text-sm bg-background focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="E.g. Implement OAuth login"
@@ -233,17 +233,17 @@ export default function Popup() {
 
         {/* Description */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-textSecondary flex items-center justify-between">
+          <label className="text-xs font-medium text-text-secondary flex items-center justify-between">
             <span>Description</span>
             {referenceUrl && (
-              <a href={referenceUrl} target="_blank" rel="noreferrer" className="text-accent flex items-center gap-1 hover:underline">
+              <a href={referenceUrl} target="_blank" rel="noreferrer" className="text-brand flex items-center gap-1 hover:underline">
                 <ExternalLink className="w-3 h-3" />
                 Source URL
               </a>
             )}
           </label>
           <textarea
-            className="w-full px-3 py-2 border border-divider rounded-[12px] text-sm resize-none h-28 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+            className="w-full px-3 py-2 border border-border-strong rounded-xl text-sm bg-background resize-none h-28 focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Task description or selected text..."
@@ -253,9 +253,9 @@ export default function Popup() {
         {/* Board & Column */}
         <div className="flex gap-3">
           <div className="flex flex-col gap-1 flex-1">
-            <label className="text-xs font-medium text-textSecondary">Board</label>
+            <label className="text-xs font-medium text-text-secondary">Board</label>
             <select
-              className="w-full px-2 py-2 border border-divider rounded-[12px] text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-accent"
+              className="w-full px-2 py-2 border border-border-strong rounded-xl text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-brand"
               value={selectedBoard}
               onChange={(e) => setSelectedBoard(e.target.value)}
             >
@@ -266,9 +266,9 @@ export default function Popup() {
           </div>
           
           <div className="flex flex-col gap-1 flex-1">
-            <label className="text-xs font-medium text-textSecondary">Column</label>
+            <label className="text-xs font-medium text-text-secondary">Column</label>
             <select
-              className="w-full px-2 py-2 border border-divider rounded-[12px] text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-accent"
+              className="w-full px-2 py-2 border border-border-strong rounded-xl text-sm bg-surface focus:outline-none focus:ring-1 focus:ring-brand"
               value={selectedColumn}
               onChange={(e) => handleColumnChange(e.target.value)}
               disabled={columns.length === 0}
@@ -283,7 +283,7 @@ export default function Popup() {
         <button
           onClick={handleCreate}
           disabled={!title || !selectedBoard || !selectedColumn || isSubmitting}
-          className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 bg-accent text-[#131313] rounded-[12px] text-sm font-medium hover:bg-accent-hover text-[#131313] dark:text-[#131313] text-white dark:text-[#131313] transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 bg-brand text-text-inverse rounded-xl text-sm font-medium hover:bg-brand-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
