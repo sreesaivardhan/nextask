@@ -52,6 +52,9 @@ model User {
   authProvider  AuthProvider @default(LOCAL)
   emailVerified Boolean      @default(false)
 
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
+
   sessions        Session[]
   ownedBoards     Board[]       @relation("BoardOwner")
   boardMembers    BoardMember[]

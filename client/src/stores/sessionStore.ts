@@ -26,6 +26,8 @@ interface SessionStore {
   updateProfile: (displayName: string) => Promise<void>;
   clearError: () => void;
   clearSessionLocally: () => void;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
@@ -106,4 +108,26 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     }
   },
   clearError: () => set({ error: null }),
+  forgotPassword: async (email: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await api.post('/auth/forgot-password', { email });
+      set({ isLoading: false, error: null });
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } }; message: string };
+      set({ isLoading: false, error: error.response?.data?.error || error.message });
+      throw err;
+    }
+  },
+  resetPassword: async (token: string, newPassword: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await api.post('/auth/reset-password', { token, newPassword });
+      set({ isLoading: false, error: null });
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } }; message: string };
+      set({ isLoading: false, error: error.response?.data?.error || error.message });
+      throw err;
+    }
+  }
 }));

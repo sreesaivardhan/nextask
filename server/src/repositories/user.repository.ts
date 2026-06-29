@@ -86,6 +86,26 @@ export class UserRepository {
       }
     });
   }
+  async setResetToken(id: string, resetTokenHash: string, resetTokenExpiresAt: Date): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { resetTokenHash, resetTokenExpiresAt },
+    });
+  }
+
+  async clearResetToken(id: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { resetTokenHash: null, resetTokenExpiresAt: null },
+    });
+  }
+
+  async updatePassword(id: string, passwordHash: string): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data: { passwordHash, resetTokenHash: null, resetTokenExpiresAt: null },
+    });
+  }
 }
 
 export const userRepository = new UserRepository();

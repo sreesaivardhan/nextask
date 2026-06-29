@@ -21,7 +21,7 @@
 | Team View                                                  | ✅      |
 | Dashboard Analytics                                        | ✅      |
 | UI improvements and css changes                            | ✅      |
-| **forgot pass word setup and GitHub OAuth, Google OAuth**  | ❌      |
+| **forgot pass word setup and GitHub OAuth, Google OAuth**  | ✅      |
 | **deploy repo cleanup**                                    | ❌      |
 | **README**                                                 | ❌      |
 | **Railway Deployment**                                     | ❌      |

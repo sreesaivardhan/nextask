@@ -1,69 +1,97 @@
-import { Info } from 'lucide-react';
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSessionStore } from '../stores/sessionStore';
+import { useToastStore } from '../stores/toastStore';
 
 export function ForgotPasswordPage(): React.ReactElement {
   const [email, setEmail] = useState('');
-  const [showMessage, setShowMessage] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const { forgotPassword, isLoading, error, clearError } = useSessionStore();
+  const { addToast } = useToastStore();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearError();
     if (!email) return;
-    setShowMessage(true);
+
+    try {
+      await forgotPassword(email);
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } }; message: string };
+      const msg = error.response?.data?.error || error.message;
+      addToast(msg, 'error');
+    }
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-primary">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <h2 className="mt-6 text-3xl font-bold tracking-tight text-primary">
           Reset your password
         </h2>
-        <p className="mt-2 text-center text-sm text-secondary">
+        <p className="mt-2 text-sm text-secondary">
           Or{' '}
-          <Link to="/login" className="font-medium text-primary-accent hover:text-primary-accent">
+          <Link to="/login" className="font-medium text-primary hover:text-primary transition duration-150">
             return to sign in
           </Link>
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-surface py-8 px-4 shadow sm:rounded-2xl sm:px-10 border">
-          {showMessage ? (
-            <div className="rounded-2xl bg-surface border border border-l-2 border-l-accent p-4 border border-primary/30">
+        <div className="bg-surface py-8 px-4 border border sm:rounded-xl sm:px-10 shadow-subtle">
+          {success ? (
+            <div className="rounded-lg bg-status-success/10 p-4 border border-status-success/20">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <span className="text-primary-accent"><Info className="w-5 h-5 inline-block mr-2" /></span>
+                  <span className="text-status-success"><CheckCircle className="w-5 h-5 inline-block mr-2" /></span>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-primary-accent">Coming Soon</h3>
-                  <div className="mt-2 text-sm text-primary-accent">
-                    <p>Password reset functionality will be available in a future update.</p>
+                  <h3 className="text-sm font-medium text-status-success">Email sent</h3>
+                  <div className="mt-2 text-sm text-status-success/80">
+                    <p>If an account exists for {email}, you will receive a password reset link shortly.</p>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              {error && (
+                <div className="bg-status-danger/10 border-l-4 border-status-danger text-status-danger px-4 py-3 rounded-lg text-sm font-medium">
+                  {error}
+                </div>
+              )}
+              
               <div>
-                <label className="block text-sm font-medium text-secondary">Email address</label>
-                <div className="mt-1">
+                <label className="block text-sm font-medium text-secondary mb-1.5">Email address</label>
+                <div className="relative">
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-strong rounded-2xl shadow-subtle placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                    placeholder="Enter your email"
+                    className="block w-full px-4 py-2.5 bg-background border border rounded-lg text-primary placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 sm:text-sm"
                   />
                 </div>
               </div>
 
-              <div>
+              <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={!email}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-2xl shadow-subtle text-sm font-medium text-primary bg-primary text-inverse hover:bg-primary-hover text-inverse focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                  disabled={isLoading || !email}
+                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-subtle text-sm font-medium text-inverse bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Send Reset Link
+                  {isLoading ? 'Sending...' : 'Send Reset Link'}
                 </button>
               </div>
             </form>

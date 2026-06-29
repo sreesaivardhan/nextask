@@ -14,3 +14,6 @@ authRouter.get('/google/callback', authController.googleCallback);
 
 authRouter.get('/github', authController.githubAuth);
 authRouter.get('/github/callback', authController.githubCallback);
+
+authRouter.post('/forgot-password', authController.forgotPassword);
+authRouter.post('/reset-password', authController.resetPassword);

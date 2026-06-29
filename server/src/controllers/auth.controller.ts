@@ -226,6 +226,40 @@ export class AuthController {
       res.redirect(`${clientUrl}/login?error=GitHub+login+failed`);
     }
   }
+  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== 'string') {
+        res.status(400).json({ error: 'Email is required' });
+        return;
+      }
+      await authService.forgotPassword(email);
+      res.status(200).json({ message: 'If an account exists, a reset link has been sent.' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || typeof token !== 'string' || !newPassword || typeof newPassword !== 'string') {
+        res.status(400).json({ error: 'Token and new password are required' });
+        return;
+      }
+      await authService.resetPassword(token, newPassword);
+      res.status(200).json({ message: 'Password has been reset successfully.' });
+    } catch (error) {
+      if (error instanceof Error && (
+        error.message.includes('Invalid or expired') ||
+        error.message.includes('at least 8 characters')
+      )) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
+  }
 }
 
 export const authController = new AuthController();
