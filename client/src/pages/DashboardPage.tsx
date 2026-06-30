@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { socketService } from '../services/socketService';
 import { useSessionStore } from '../stores/sessionStore';
+import { LayoutTemplate, Rocket, Route, Bug, CalendarDays, CheckSquare } from 'lucide-react';
 
 export function DashboardPage(): React.ReactElement {
   const { boards, fetchBoards, createBoard, updateBoard, deleteBoard, isLoading,
@@ -13,6 +14,7 @@ export function DashboardPage(): React.ReactElement {
   const { user } = useSessionStore();
   const [isCreating, setIsCreating] = useState(false);
   const [newBoardName, setNewBoardName] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('Blank Board');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingSprintEndDate, setEditingSprintEndDate] = useState<string>('');
@@ -69,8 +71,9 @@ export function DashboardPage(): React.ReactElement {
       return;
     }
     try {
-      await createBoard(trimmedName);
+      await createBoard(trimmedName, selectedTemplate);
       setNewBoardName('');
+      setSelectedTemplate('Blank Board');
       setIsCreating(false);
       addToast('Board created', 'success');
     } catch (err) {
@@ -246,20 +249,65 @@ export function DashboardPage(): React.ReactElement {
       </div>
 
       {isCreating && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40">
-          <div className="bg-surface p-6 rounded-xl shadow-floating border border-strong w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Create Board</h2>
-            <form onSubmit={handleCreate} className="flex flex-col gap-4">
-              <input
-                type="text"
-                placeholder="Board Name"
-                className="border p-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none"
-                value={newBoardName}
-                onChange={(e) => setNewBoardName(e.target.value)}
-                autoFocus
-                maxLength={100}
-              />
-              <div className="flex justify-end gap-2">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40 p-4">
+          <div className="bg-surface p-6 rounded-xl shadow-floating border border-strong w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <h2 className="text-xl font-bold mb-4 shrink-0">Create Board</h2>
+            <form onSubmit={handleCreate} className="flex flex-col gap-6 overflow-y-auto pl-2 -ml-2 pr-2 pb-2">
+              <div>
+                <label className="block text-sm font-medium text-secondary mb-1">Board Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Q3 Roadmap"
+                  className="w-full border p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none"
+                  value={newBoardName}
+                  onChange={(e) => setNewBoardName(e.target.value)}
+                  autoFocus
+                  maxLength={100}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-secondary mb-3">Choose Template</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { name: 'Blank Board', icon: LayoutTemplate, desc: 'Start from scratch with an empty board.' },
+                    { name: 'Software Sprint', icon: Rocket, desc: 'Agile workflow with backlog, review and done columns.' },
+                    { name: 'Product Roadmap', icon: Route, desc: 'High-level planning and tracking.' },
+                    { name: 'Bug Tracker', icon: Bug, desc: 'Manage and squash issues.' },
+                    { name: 'Content Calendar', icon: CalendarDays, desc: 'Schedule and organize posts.' },
+                    { name: 'Personal Planner', icon: CheckSquare, desc: 'Track your daily personal tasks.' }
+                  ].map(tpl => {
+                    const isSelected = selectedTemplate === tpl.name;
+                    return (
+                      <div 
+                        key={tpl.name}
+                        onClick={() => setSelectedTemplate(tpl.name)}
+                        className={`cursor-pointer border rounded-2xl p-4 flex gap-4 transition-all duration-200 ease-in-out h-full ${
+                          isSelected 
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary shadow-sm scale-[1.02]' 
+                            : 'border-strong bg-surface hover:border-primary/40 hover:bg-elevated hover:shadow-sm'
+                        }`}
+                      >
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-colors duration-200 ${
+                          isSelected ? 'bg-primary/10 text-primary' : 'bg-muted/10 text-secondary'
+                        }`}>
+                          <tpl.icon size={20} strokeWidth={2} />
+                        </div>
+                        <div className="flex flex-col justify-center">
+                          <div className="font-bold text-sm text-primary">
+                            {tpl.name}
+                          </div>
+                          <div className="text-[13px] text-muted mt-1 leading-snug">
+                            {tpl.desc}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t mt-auto shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsCreating(false)}
@@ -267,7 +315,7 @@ export function DashboardPage(): React.ReactElement {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="bg-primary text-inverse px-4 py-2 rounded-xl font-medium hover:bg-primary-hover text-inverse">
+                <button type="submit" className="bg-primary text-inverse px-5 py-2 rounded-xl font-medium hover:bg-primary-hover text-inverse">
                   Create
                 </button>
               </div>

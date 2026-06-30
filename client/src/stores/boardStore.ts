@@ -14,7 +14,7 @@ interface BoardStore {
   boards: Board[];
   isLoading: boolean;
   fetchBoards: () => Promise<void>;
-  createBoard: (name: string) => Promise<Board>;
+  createBoard: (name: string, template?: string) => Promise<Board>;
   updateBoard: (id: string, data: { name?: string; sprintEndDate?: string | null; complexityMax?: number | null }) => Promise<Board>;
   deleteBoard: (id: string) => Promise<void>;
   // Socket-driven mutations (called by socket listeners, not REST)
@@ -35,8 +35,8 @@ export const useBoardStore = create<BoardStore>((set, get) => ({
       set({ boards: [], isLoading: false });
     }
   },
-  createBoard: async (name) => {
-    const board = await api.post('/boards', { name });
+  createBoard: async (name, template) => {
+    const board = await api.post('/boards', { name, template });
     set({ boards: [board, ...get().boards] });
     return board;
   },

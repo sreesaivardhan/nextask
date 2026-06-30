@@ -41,8 +41,8 @@ export class BoardController {
   async createBoard(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
-      const { name } = req.body;
-      const board = await boardService.createBoard(userId, name || '');
+      const { name, template } = req.body;
+      const board = await boardService.createBoard(userId, name || '', template);
       res.status(201).json(board);
       // Broadcast to the user's personal room so all their tabs (dashboard, etc.)
       // receive the new board without refresh. Exclude the sender tab.
