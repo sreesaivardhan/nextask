@@ -255,31 +255,7 @@ The architecture robustly supports 10+ concurrent users per board without silent
 
 ---
 
-## 15. Screenshots
-
-![Board View](/path/to/board-placeholder.png)
-*Real-time Kanban Board*
-
-![AI Insights](/path/to/ai-placeholder.png)
-*AI Insights Panel*
-
-![Dashboard](/path/to/dashboard-placeholder.png)
-*Cross-project Dashboard*
-
-![GitHub Import](/path/to/github-placeholder.png)
-*GitHub Issues Import Modal*
-
-![Chrome Extension](/path/to/extension-placeholder.png)
-*Chrome Extension Web Clipper*
-
-![Profile](/path/to/profile-placeholder.png)
-*User Profile & Auth Providers*
-
-*(Note: Replace placeholder paths with actual image links after deployment.)*
-
----
-
-## 16. Future Improvements
+## 15. Future Improvements
 
 The following features were scoped out of the current sprint but remain on the roadmap:
 * **Board Templates:** Pre-configured column layouts (e.g., Scrum, Bug Tracking).
@@ -289,6 +265,6 @@ The following features were scoped out of the current sprint but remain on the r
 
 ---
 
-## 17. License
+## 16. License
 
 This project is licensed under the MIT License.
