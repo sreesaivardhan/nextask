@@ -561,7 +561,7 @@ export function BoardPage(): React.ReactElement {
             {displayMembers.map((m) => (
               <div
                 key={m.userId}
-                className="w-8 h-8 rounded-full bg-primary/10 text-primary-accent flex items-center justify-center font-bold text-xs border-2 border-surface"
+                className="w-8 h-8 rounded-full bg-surface text-primary flex items-center justify-center font-bold text-xs border-2 border-primary ring-2 ring-surface"
                 title={`${m.user.displayName} (${m.role})`}
               >
                 {m.user.displayName.charAt(0).toUpperCase()}

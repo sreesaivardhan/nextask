@@ -91,7 +91,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={['input', 'preview', 'completed'].includes(step) ? onClose : undefined} />
       <div className="relative bg-surface rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-        <div className="px-6 py-4 border-b border flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-strong flex items-center justify-between">
           <h2 className="text-xl font-bold text-primary">Import from GitHub</h2>
           {['input', 'preview', 'completed'].includes(step) && (
             <button onClick={onClose} className="text-muted hover:text-secondary">

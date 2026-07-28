@@ -17,26 +17,25 @@ export function AppLayout(): React.ReactElement {
       <header className="bg-surface border-b border-strong px-6 py-3 flex justify-between items-center">
         <div className="font-bold text-lg text-primary-accent tracking-tight">NexTask</div>
         {user && (
-          <div className="flex items-center gap-1 bg-elevated border border-strong rounded-xl px-2 py-1">
-            <div className="flex items-center gap-2 px-1 py-0.5">
-              {/* Avatar circle */}
-              <div className="w-7 h-7 rounded-full border-2 border-primary bg-surface text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                {user.displayName.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-sm font-medium text-primary hidden sm:block pr-1">
-                {user.displayName}
-              </span>
+          <div className="flex items-center gap-2">
+            {/* Avatar circle + name — no extra box, just the circle */}
+            <div className="w-7 h-7 rounded-full border-2 border-primary bg-surface text-primary flex items-center justify-center font-bold text-xs shrink-0">
+              {user.displayName.charAt(0).toUpperCase()}
             </div>
-            <div className="w-px h-5 bg-strong mx-1 shrink-0" />
+            <span className="text-sm font-medium text-primary hidden sm:block">
+              {user.displayName}
+            </span>
+            {/* Separate pill for Profile */}
             <Link
               to="/profile"
-              className="text-sm text-secondary hover:text-primary font-medium px-2.5 py-1.5 rounded-lg hover:bg-surface transition-colors"
+              className="text-sm text-secondary hover:text-primary font-medium px-3 py-1.5 rounded-lg border border-strong hover:bg-elevated transition-colors"
             >
               Profile
             </Link>
+            {/* Separate pill for Logout — red on hover */}
             <button
               onClick={handleLogout}
-              className="text-sm text-secondary font-medium px-2.5 py-1.5 rounded-lg hover:text-status-danger hover:bg-status-danger/8 transition-colors"
+              className="text-sm text-secondary font-medium px-3 py-1.5 rounded-lg border border-strong hover:text-status-danger hover:bg-status-danger/8 hover:border-status-danger/30 transition-colors"
             >
               Logout
             </button>

@@ -106,7 +106,7 @@ export function WeeklyDigestModal({ isOpen, onClose, boardId, canGenerate }: Wee
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-surface rounded-2xl shadow-floating border border-strong w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border flex justify-between items-center shrink-0">
+        <div className="px-6 py-4 border-b border-strong flex justify-between items-center shrink-0">
           <h2 className="text-lg font-bold text-primary flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-primary-accent" /> Weekly AI Digest
           </h2>
@@ -146,25 +146,25 @@ export function WeeklyDigestModal({ isOpen, onClose, boardId, canGenerate }: Wee
                   value={`${digest.currentVelocity.toFixed(1)}`}
                   unit="cards/day"
                   sub={`Trend: ${digest.velocityTrend}`}
-                  accentClass="bg-primary"
+                  accentClass="var(--accent-primary)"
                 />
                 <DigestStatCard
                   label="Completed"
                   value={String(digest.cardsCompleted)}
                   sub="Last 7 days"
-                  accentClass="bg-status-success"
+                  accentClass="var(--status-success)"
                 />
                 <DigestStatCard
                   label="Created"
                   value={String(digest.cardsCreated)}
                   sub="Last 7 days"
-                  accentClass="bg-primary"
+                  accentClass="var(--accent-primary)"
                 />
                 <DigestStatCard
                   label="Active WIP"
                   value={String(digest.currentWIP)}
                   sub="Unfinished tasks"
-                  accentClass="bg-status-warning"
+                  accentClass="var(--status-warning)"
                 />
               </div>
 
@@ -203,7 +203,7 @@ function DigestStatCard({
 }) {
   return (
     <div className="relative bg-surface rounded-xl border border-strong shadow-subtle overflow-hidden">
-      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentClass}`} />
+      <div style={{ background: accentClass }} className="absolute left-0 top-0 bottom-0 w-[3px]" />
       <div className="pl-4 pr-4 py-4">
         <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">{label}</div>
         <div className="text-xl font-black text-primary">

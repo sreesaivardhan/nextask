@@ -118,7 +118,7 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-surface rounded-2xl shadow-floating w-full max-w-6xl max-h-[90vh] flex flex-col border border-strong">
         {/* Header */}
-        <div className="px-6 py-4 border-b border flex justify-between items-center shrink-0">
+        <div className="px-6 py-4 border-b border-strong flex justify-between items-center shrink-0">
           <h2 className="text-xl font-bold text-primary flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-primary-accent" /> Dashboard Analytics
           </h2>
@@ -136,15 +136,15 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest text-muted mb-3">Overview</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatCard title="Total Cards" value={data.overview.totalCards} accentColor="bg-primary" />
-                  <StatCard title="Completion" value={`${data.overview.completionPercent.toFixed(1)}%`} accentColor="bg-status-success" />
-                  <StatCard title="Velocity" value={`${data.overview.currentVelocity.toFixed(1)}/day`} accentColor="bg-status-info" />
-                  <StatCard title="Avg Complexity" value={`${data.overview.averageComplexity.toFixed(1)} SP`} accentColor="bg-primary" />
+                  <StatCard title="Total Cards" value={data.overview.totalCards} accentColor="var(--accent-primary)" />
+                  <StatCard title="Completion" value={`${data.overview.completionPercent.toFixed(1)}%`} accentColor="var(--status-success)" />
+                  <StatCard title="Velocity" value={`${data.overview.currentVelocity.toFixed(1)}/day`} accentColor="var(--status-info)" />
+                  <StatCard title="Avg Complexity" value={`${data.overview.averageComplexity.toFixed(1)} SP`} accentColor="var(--accent-primary)" />
 
-                  <StatCard title="To Do" value={data.overview.todoCards} accentColor="bg-elevated" />
-                  <StatCard title="In Progress" value={data.overview.inProgressCards} accentColor="bg-status-warning" />
-                  <StatCard title="Completed" value={data.overview.completedCards} accentColor="bg-status-success" />
-                  <StatCard title="Blocked" value={data.overview.blockedCards} accentColor="bg-status-danger" />
+                  <StatCard title="To Do" value={data.overview.todoCards} accentColor="var(--border-strong)" />
+                  <StatCard title="In Progress" value={data.overview.inProgressCards} accentColor="var(--status-warning)" />
+                  <StatCard title="Completed" value={data.overview.completedCards} accentColor="var(--status-success)" />
+                  <StatCard title="Blocked" value={data.overview.blockedCards} accentColor="var(--status-danger)" />
                 </div>
               </div>
 
@@ -276,11 +276,11 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
   );
 }
 
-// StatCard — neutral bg, readable text, coloured left border accent only
+// StatCard — neutral bg, readable text, coloured left bar accent via inline style
 function StatCard({ title, value, accentColor }: { title: string; value: string | number; accentColor: string }) {
   return (
     <div className="relative bg-surface rounded-xl shadow-subtle border border-strong overflow-hidden">
-      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentColor}`} />
+      <div style={{ background: accentColor }} className="absolute left-0 top-0 bottom-0 w-[3px]" />
       <div className="pl-4 pr-4 py-4">
         <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">{title}</div>
         <div className="text-2xl font-black text-primary">{value}</div>
