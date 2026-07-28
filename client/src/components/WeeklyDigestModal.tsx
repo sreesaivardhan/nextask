@@ -146,25 +146,25 @@ export function WeeklyDigestModal({ isOpen, onClose, boardId, canGenerate }: Wee
                   value={`${digest.currentVelocity.toFixed(1)}`}
                   unit="cards/day"
                   sub={`Trend: ${digest.velocityTrend}`}
-                  accentClass="border-l-primary"
+                  accentClass="bg-primary"
                 />
                 <DigestStatCard
                   label="Completed"
                   value={String(digest.cardsCompleted)}
                   sub="Last 7 days"
-                  accentClass="border-l-status-success"
+                  accentClass="bg-status-success"
                 />
                 <DigestStatCard
                   label="Created"
                   value={String(digest.cardsCreated)}
                   sub="Last 7 days"
-                  accentClass="border-l-primary"
+                  accentClass="bg-primary"
                 />
                 <DigestStatCard
                   label="Active WIP"
                   value={String(digest.currentWIP)}
                   sub="Unfinished tasks"
-                  accentClass="border-l-status-warning"
+                  accentClass="bg-status-warning"
                 />
               </div>
 
@@ -202,13 +202,16 @@ function DigestStatCard({
   accentClass: string;
 }) {
   return (
-    <div className={`bg-surface p-4 rounded-xl border-l-2 border border ${accentClass} shadow-subtle`}>
-      <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">{label}</div>
-      <div className="text-xl font-black text-primary">
-        {value}
-        {unit && <span className="text-sm font-normal text-secondary ml-1">{unit}</span>}
+    <div className="relative bg-surface rounded-xl border border-strong shadow-subtle overflow-hidden">
+      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentClass}`} />
+      <div className="pl-4 pr-4 py-4">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">{label}</div>
+        <div className="text-xl font-black text-primary">
+          {value}
+          {unit && <span className="text-sm font-normal text-secondary ml-1">{unit}</span>}
+        </div>
+        {sub && <div className="text-xs text-muted mt-1">{sub}</div>}
       </div>
-      {sub && <div className="text-xs text-muted mt-1">{sub}</div>}
     </div>
   );
 }

@@ -136,15 +136,15 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest text-muted mb-3">Overview</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <StatCard title="Total Cards" value={data.overview.totalCards} accentColor="border-l-primary" />
-                  <StatCard title="Completion" value={`${data.overview.completionPercent.toFixed(1)}%`} accentColor="border-l-status-success" />
-                  <StatCard title="Velocity" value={`${data.overview.currentVelocity.toFixed(1)}/day`} accentColor="border-l-status-info" />
-                  <StatCard title="Avg Complexity" value={`${data.overview.averageComplexity.toFixed(1)} SP`} accentColor="border-l-primary" />
+                  <StatCard title="Total Cards" value={data.overview.totalCards} accentColor="bg-primary" />
+                  <StatCard title="Completion" value={`${data.overview.completionPercent.toFixed(1)}%`} accentColor="bg-status-success" />
+                  <StatCard title="Velocity" value={`${data.overview.currentVelocity.toFixed(1)}/day`} accentColor="bg-status-info" />
+                  <StatCard title="Avg Complexity" value={`${data.overview.averageComplexity.toFixed(1)} SP`} accentColor="bg-primary" />
 
-                  <StatCard title="To Do" value={data.overview.todoCards} accentColor="border-l-elevated" />
-                  <StatCard title="In Progress" value={data.overview.inProgressCards} accentColor="border-l-status-warning" />
-                  <StatCard title="Completed" value={data.overview.completedCards} accentColor="border-l-status-success" />
-                  <StatCard title="Blocked" value={data.overview.blockedCards} accentColor="border-l-status-danger" />
+                  <StatCard title="To Do" value={data.overview.todoCards} accentColor="bg-elevated" />
+                  <StatCard title="In Progress" value={data.overview.inProgressCards} accentColor="bg-status-warning" />
+                  <StatCard title="Completed" value={data.overview.completedCards} accentColor="bg-status-success" />
+                  <StatCard title="Blocked" value={data.overview.blockedCards} accentColor="bg-status-danger" />
                 </div>
               </div>
 
@@ -279,9 +279,12 @@ export function DashboardAnalyticsModal({ isOpen, onClose, boardId }: DashboardA
 // StatCard — neutral bg, readable text, coloured left border accent only
 function StatCard({ title, value, accentColor }: { title: string; value: string | number; accentColor: string }) {
   return (
-    <div className={`bg-surface p-4 rounded-xl shadow-subtle border-l-2 border border ${accentColor}`}>
-      <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">{title}</div>
-      <div className="text-2xl font-black text-primary">{value}</div>
+    <div className="relative bg-surface rounded-xl shadow-subtle border border-strong overflow-hidden">
+      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentColor}`} />
+      <div className="pl-4 pr-4 py-4">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-muted mb-1.5">{title}</div>
+        <div className="text-2xl font-black text-primary">{value}</div>
+      </div>
     </div>
   );
 }

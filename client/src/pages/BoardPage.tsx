@@ -617,7 +617,7 @@ export function BoardPage(): React.ReactElement {
           {currentUserRole !== 'OWNER' && (
             <button
               onClick={() => setShowLeaveConfirm(true)}
-              className="bg-status-danger/5 text-status-danger border border-status-danger/20 px-3 py-1.5 rounded-lg font-medium text-sm hover:bg-status-danger/10 transition-colors flex items-center gap-1.5"
+              className="text-sm text-secondary font-medium px-3 py-1.5 rounded-lg hover:text-status-danger hover:bg-status-danger/8 border border-transparent hover:border-status-danger/20 transition-colors"
             >
               Leave
             </button>

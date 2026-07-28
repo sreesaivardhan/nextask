@@ -17,26 +17,26 @@ export function AppLayout(): React.ReactElement {
       <header className="bg-surface border-b border-strong px-6 py-3 flex justify-between items-center">
         <div className="font-bold text-lg text-primary-accent tracking-tight">NexTask</div>
         {user && (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              {/* Avatar chip — bg-primary/10 gives legible tint without opacity clash */}
-              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary-accent flex items-center justify-center font-bold text-sm">
+          <div className="flex items-center gap-1 bg-elevated border border-strong rounded-xl px-2 py-1">
+            <div className="flex items-center gap-2 px-1 py-0.5">
+              {/* Avatar circle */}
+              <div className="w-7 h-7 rounded-full border-2 border-primary bg-surface text-primary flex items-center justify-center font-bold text-xs shrink-0">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm font-medium text-primary hidden sm:block">
+              <span className="text-sm font-medium text-primary hidden sm:block pr-1">
                 {user.displayName}
               </span>
             </div>
+            <div className="w-px h-5 bg-strong mx-1 shrink-0" />
             <Link
               to="/profile"
-              className="text-sm text-secondary hover:text-primary font-medium px-3 py-1.5 rounded-lg hover:bg-elevated transition-colors"
+              className="text-sm text-secondary hover:text-primary font-medium px-2.5 py-1.5 rounded-lg hover:bg-surface transition-colors"
             >
               Profile
             </Link>
-            {/* Logout — neutral text normally, soft destructive on hover */}
             <button
               onClick={handleLogout}
-              className="text-sm text-secondary font-medium px-3 py-1.5 rounded-lg hover:text-status-danger hover:bg-status-danger/8 border border-transparent hover:border-status-danger/20 transition-colors"
+              className="text-sm text-secondary font-medium px-2.5 py-1.5 rounded-lg hover:text-status-danger hover:bg-status-danger/8 transition-colors"
             >
               Logout
             </button>

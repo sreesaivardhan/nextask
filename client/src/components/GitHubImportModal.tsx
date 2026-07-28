@@ -266,7 +266,7 @@ export function GitHubImportModal({ isOpen, onClose, boardId }: GitHubImportModa
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border flex justify-end gap-3 bg-background rounded-b-xl">
+        <div className="px-6 py-4 border-t border-strong flex justify-end gap-3 bg-surface rounded-b-xl">
           {['input', 'preview', 'completed'].includes(step) && (
             <button
               onClick={onClose}
