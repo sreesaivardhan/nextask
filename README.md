@@ -1,6 +1,6 @@
 # NexTask
 
-**NexTask** is a real-time, AI-powered collaborative Kanban board built for the Alfaleus Full Stack Assignment. It combines seamless live synchronization with intelligent project management capabilities to streamline team workflows, identify bottlenecks, and predict sprint risks automatically.
+**NexTask** is a real-time, AI-powered collaborative Kanban board. It combines seamless live synchronization with intelligent project management capabilities to streamline team workflows, identify bottlenecks, and predict sprint risks automatically.
 
 ---
 
