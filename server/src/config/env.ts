@@ -15,6 +15,20 @@ export const env = {
   port: parseInt(process.env['PORT'] ?? '3001', 10),
   databaseUrl: requireEnv('DATABASE_URL'),
   sessionSecret: requireEnv('SESSION_SECRET'),
-  clientUrls: (process.env['CLIENT_URL'] ?? 'http://localhost:5173,http://localhost:4173').split(','),
+
+  // CLIENT_URL may be comma-separated (e.g. Vercel preview + prod URLs).
+  // clientUrls is used for CORS allow-list; clientUrl is the primary redirect target.
+  clientUrls: (process.env['CLIENT_URL'] ?? 'http://localhost:5173,http://localhost:4173').split(',').map(u => u.trim()),
+  get clientUrl(): string { return this.clientUrls[0]; },
+
+  // The public URL of this backend — required for OAuth callback construction.
+  serverUrl: process.env['SERVER_URL'] ?? 'http://localhost:3001',
+
+  // OAuth credentials
+  googleClientId: process.env['GOOGLE_CLIENT_ID'] ?? '',
+  googleClientSecret: process.env['GOOGLE_CLIENT_SECRET'] ?? '',
+  githubClientId: process.env['GITHUB_CLIENT_ID'] ?? '',
+  githubClientSecret: process.env['GITHUB_CLIENT_SECRET'] ?? '',
+
   githubToken: process.env['GITHUB_TOKEN'],
-} as const;
+};

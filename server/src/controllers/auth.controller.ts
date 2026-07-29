@@ -5,6 +5,7 @@ import { oauthService } from '../services/oauth.service';
 import { AuthProvider } from '@prisma/client';
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
+import { env } from '../config/env';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -146,7 +147,7 @@ export class AuthController {
   async googleCallback(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       const { code, state } = req.query;
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      const clientUrl = env.clientUrl;
 
       if (!state || typeof state !== 'string' || state !== req.session.oauthState) {
         logger.error('Invalid or missing Google OAuth state parameter');
@@ -161,11 +162,11 @@ export class AuthController {
       }
 
       const googleUser = await oauthService.getGoogleUserFromCode(code);
-      
+
       const { user, session } = await authService.handleOAuthLogin(
         googleUser.email,
         googleUser.name,
-        AuthProvider.GOOGLE
+        AuthProvider.GOOGLE,
       );
 
       req.session.sessionId = session.id;
@@ -174,8 +175,7 @@ export class AuthController {
       res.redirect(`${clientUrl}/dashboard`);
     } catch (error) {
       logger.error('Google OAuth error:', error);
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      res.redirect(`${clientUrl}/login?error=Google+login+failed`);
+      res.redirect(`${env.clientUrl}/login?error=Google+login+failed`);
     }
   }
 
@@ -193,7 +193,7 @@ export class AuthController {
   async githubCallback(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       const { code, state } = req.query;
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      const clientUrl = env.clientUrl;
 
       if (!state || typeof state !== 'string' || state !== req.session.oauthState) {
         logger.error('Invalid or missing GitHub OAuth state parameter');
@@ -208,12 +208,12 @@ export class AuthController {
       }
 
       const githubUser = await oauthService.getGithubUserFromCode(code);
-      
+
       const { user, session } = await authService.handleOAuthLogin(
         githubUser.email,
         githubUser.name,
         AuthProvider.GITHUB,
-        githubUser.username
+        githubUser.username,
       );
 
       req.session.sessionId = session.id;
@@ -222,8 +222,7 @@ export class AuthController {
       res.redirect(`${clientUrl}/dashboard`);
     } catch (error) {
       logger.error('GitHub OAuth error:', error);
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-      res.redirect(`${clientUrl}/login?error=GitHub+login+failed`);
+      res.redirect(`${env.clientUrl}/login?error=GitHub+login+failed`);
     }
   }
   async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {

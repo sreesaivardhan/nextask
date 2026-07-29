@@ -19,7 +19,7 @@ export function startAIScheduler(): void {
   setTimeout(() => {
     analyzeBoards().catch(err => console.error('[AI] Analysis error:', err));
     generateDigests().catch(err => console.error('[AI] Digest generation error:', err));
-  }, 5000);
+  }, 30_000);
 
   intervalId = setInterval(() => {
     analyzeBoards().catch(err => console.error('[AI] Analysis error:', err));

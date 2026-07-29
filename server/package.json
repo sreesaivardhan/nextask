@@ -5,8 +5,9 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/server.js",
+    "start:prod": "prisma migrate deploy && node dist/server.js",
     "lint": "eslint src",
     "format": "prettier --write src",
     "prisma:migrate": "prisma migrate dev",

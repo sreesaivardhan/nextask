@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { logger } from '../utils/logger';
+import { env } from '../config/env';
 
 interface SendResetPasswordEmailOptions {
   to: string;
@@ -44,7 +45,7 @@ export class EmailService {
       return;
     }
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const clientUrl = env.clientUrl;
     const resetUrl = `${clientUrl}/reset-password?token=${resetToken}`;
     const from = process.env.SMTP_FROM || 'NexTask <noreply@nextask.com>';
 
