@@ -1,270 +1,424 @@
+<div align="center">
+
 # NexTask
 
-**NexTask** is a real-time, AI-powered collaborative Kanban board. It combines seamless live synchronization with intelligent project management capabilities to streamline team workflows, identify bottlenecks, and predict sprint risks automatically.
+### AI-Powered Collaborative Kanban — Built for Production
+
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=flat-square)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white&style=flat-square)](https://www.typescriptlang.org)
+[![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white&style=flat-square)](https://expressjs.com)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=nodedotjs&logoColor=white&style=flat-square)](https://nodejs.org)
+[![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white&style=flat-square)](https://www.prisma.io)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white&style=flat-square)](https://neon.tech)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-4-010101?logo=socketdotio&logoColor=white&style=flat-square)](https://socket.io)
+[![Gemini](https://img.shields.io/badge/Google_Gemini-AI-4285F4?logo=google&logoColor=white&style=flat-square)](https://ai.google.dev)
+[![Render](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render&logoColor=white&style=flat-square)](https://render.com)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white&style=flat-square)](https://vercel.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+
+**[Live Demo](https://nextask-flame.vercel.app) · [Backend API](https://nexttask-backend.onrender.com/health) · [GitHub](https://github.com/sreesaivardhan/nextask)**
+
+</div>
 
 ---
 
-## 1. Project Overview
+NexTask is a **production-grade, AI-powered collaborative Kanban platform** that helps engineering teams move faster and smarter. It combines real-time multi-user synchronization with an autonomous AI scheduler — continuously analyzing board health, predicting sprint risks, detecting bottlenecks, and surfacing actionable insights without any manual input.
 
-NexTask exists to solve a common problem in agile project management: teams often realize they are falling behind only when it's too late. By continuously analyzing task complexity, column congestion, and historical velocity, NexTask acts as a proactive, autonomous project manager.
-
-It was designed from the ground up for the Alfaleus Full Stack Assignment, focusing on real-time concurrency, responsive design, and practical AI integrations.
+Built on a modern full-stack architecture with **React + Express + Prisma + Socket.IO + Google Gemini**, NexTask is deployed across **Vercel**, **Render**, and **Neon PostgreSQL**.
 
 ---
 
-## 2. Features
+## Features
 
 ### Real-Time Collaboration
-* **Live Collaborative Kanban:** Multiple users can view and edit the same board simultaneously.
-* **Drag & Drop:** Fluid sorting and column transitions.
-* **Live Synchronization:** All actions (moving cards, editing titles, adding comments) instantly propagate to all connected clients.
-* **Last-Write-Wins Conflict Handling:** Built-in safeguards to prevent silent data loss during simultaneous edits.
-* **Activity History:** Detailed audit logs of all actions on the board.
+| Feature | Description |
+|---|---|
+| **Live Kanban Board** | Multiple users edit the same board simultaneously with zero refresh |
+| **Drag & Drop** | Fluid card sorting and column transitions with @dnd-kit |
+| **Socket.IO Sync** | All mutations (move, edit, comment, delete) broadcast instantly to every connected client |
+| **Conflict Resolution** | Optimistic concurrency via `version` field — HTTP 409 + UI dialog on simultaneous edits |
+| **Activity Logs** | Full audit trail of every board action |
 
 ### AI Project Manager
-* **Background Scheduler:** Autonomous chron-jobs evaluate board health independently.
-* **Bottleneck Detection:** Identifies columns with excessive tasks compared to historical averages.
-* **Sprint Risk Assessment:** Computes completion probability based on remaining days and required velocity.
-* **Task Complexity Inference:** Automatically suggests Story Point values (complexity) based on the title and description context.
-* **Weekly Digest:** Generates automated weekly summaries of velocity trends and completed work.
-* **AI Insights Panel:** A dedicated dashboard streaming real-time AI deductions.
-* **Deadline Prediction:** Identifies specific tasks at high risk of missing the sprint end date.
+| Feature | Description |
+|---|---|
+| **Bottleneck Detection** | Identifies over-loaded columns vs. historical averages |
+| **Sprint Risk Assessment** | Computes completion probability from velocity + remaining sprint days |
+| **Deadline Prediction** | Flags individual cards at risk of missing the sprint deadline |
+| **Story Point Suggestions** | Gemini infers complexity on a Fibonacci scale from card title + description |
+| **Weekly Digest** | Auto-generated 7-day velocity summaries with trend analysis |
+| **AI Insights Panel** | Dedicated in-app dashboard streaming AI findings asynchronously |
 
 ### GitHub Integration
-* **Public Repository Import:** Import issues directly from any public GitHub repository.
-* **Pagination:** Seamlessly handles multi-page API responses.
-* **Deduplication:** Prevents duplicate cards by tracking original GitHub Issue IDs.
-* **Label Mapping:** Automatically converts GitHub tags into NexTask Labels.
-* **Assignee Mapping:** Assigns tasks dynamically (bonus mapping logic).
-*(Note: Imports are capped at 20 issues per batch to respect rate limits and Railway resource constraints while proving full pagination capabilities internally.)*
-
-### Chrome Extension
-* **Clip Selected Text:** Highlight text on any page to instantly turn it into a task description.
-* **Clip Webpage:** Save entire URLs for reference.
-* **Real-time Task Creation:** Send tasks directly to your active NexTask board from any tab.
+| Feature | Description |
+|---|---|
+| **Issue Import** | Import issues from any public GitHub repository |
+| **Pagination** | Handles multi-page API responses via `Link` header traversal |
+| **Deduplication** | Composite unique index prevents duplicate imports (`boardId + repo + issueNumber`) |
+| **Label Mapping** | Converts GitHub labels into NexTask labels automatically |
 
 ### Authentication
-* **Email/Password:** Secure local authentication with bcrypt hashing.
-* **Google OAuth:** One-click seamless login via Google.
-* **GitHub OAuth:** One-click seamless login via GitHub.
-* **Forgot Password:** Secure email recovery flow.
-* **Reset Password:** Cryptographically secure one-time reset tokens.
-* **Secure Session Authentication:** Stateful Express sessions backed by PostgreSQL.
+| Feature | Description |
+|---|---|
+| **Email / Password** | Bcrypt-hashed local auth with email verification flow |
+| **Google OAuth** | One-click sign-in via Google |
+| **GitHub OAuth** | One-click sign-in via GitHub |
+| **Forgot / Reset Password** | Cryptographically secure one-time tokens via email |
+| **Persistent Sessions** | Express sessions stored in PostgreSQL — survive backend restarts |
 
 ### Team Management
-* **Team View:** Global overview of all board members and their capacities.
-* **Dashboard:** Aggregated metrics of all boards you own or participate in.
-* **Board Members:** Role-based access control (Owner, Admin, Member, Viewer).
-* **Collaboration:** Contextual comments and task assignments.
+| Feature | Description |
+|---|---|
+| **Role-Based Access** | Owner · Admin · Member · Viewer permissions |
+| **Board Sharing** | Invite collaborators by email |
+| **Comments** | Contextual card-level discussion |
+| **Assignments** | Assign cards to board members |
+| **Dashboard Analytics** | Cross-board velocity, completion rates, WIP trends |
+
+### Chrome Extension
+Clip text or full URLs from any webpage directly into a NexTask card — without leaving your browser tab.
 
 ---
 
-## 3. Tech Stack
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Vercel (Frontend)                    │
+│              React · Vite · Tailwind · Zustand          │
+└────────────────────────┬────────────────────────────────┘
+                         │  HTTPS + WebSocket
+┌────────────────────────▼────────────────────────────────┐
+│                   Render (Backend)                      │
+│           Express · TypeScript · Prisma · Socket.IO     │
+│   ┌──────────────┐  ┌──────────────┐  ┌─────────────┐   │
+│   │  REST API    │  │  Socket.IO   │  │ AI Scheduler│   │
+│   │  /api/*      │  │  WS Rooms    │  │  (Gemini)   │   │
+│   └──────────────┘  └──────────────┘  └─────────────┘   │
+└────────────────────────┬────────────────────────────────┘
+                         │  Pooled Connection (pgbouncer)
+┌────────────────────────▼────────────────────────────────┐
+│                   Neon PostgreSQL                       │
+│           Serverless · Pooled · Auto-scaling            │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Request lifecycle:**
+1. User action → REST API call
+2. Backend validates, persists to Neon via Prisma
+3. Success → Socket.IO broadcasts mutation to all room members
+4. All connected clients apply the event to local Zustand state instantly
+
+**AI lifecycle:**
+- Background scheduler fires every N minutes (configurable via `AI_ANALYSIS_INTERVAL_MINUTES`)
+- Gemini API analyzes board state independently of the request lifecycle
+- Results are written to `AIInsight` records and pushed to connected clients via Socket.IO
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
-| :--- | :--- |
-| **Frontend** | React, TypeScript, Tailwind CSS, Vite, Zustand |
-| **Backend** | Node.js, Express, TypeScript |
-| **Database** | PostgreSQL, Prisma ORM |
-| **Realtime** | Socket.io |
-| **Authentication** | Passport.js (Google, GitHub, Local), Express-Session |
-| **AI** | Google Gemini API (via @google/genai) |
-| **Deployment** | Railway |
-| **Extension** | Chrome Manifest V3, React |
+|:---|:---|
+| **Frontend** | React 19, TypeScript, Tailwind CSS, Vite, Zustand, @dnd-kit |
+| **Backend** | Node.js 20, Express 4, TypeScript |
+| **Database** | Neon PostgreSQL, Prisma ORM 5 |
+| **Realtime** | Socket.IO 4 |
+| **Auth** | Express-Session, bcrypt, Google OAuth, GitHub OAuth |
+| **AI** | Google Gemini API (`@google/genai`) |
+| **Email** | Nodemailer (Gmail SMTP) |
+| **Deployment** | Vercel (frontend) · Render (backend) · Neon (database) |
+| **Extension** | Chrome Manifest V3, React, Vite |
 
 ---
 
-## 4. Architecture
+## Getting Started
 
+### Prerequisites
+- Node.js 20+
+- PostgreSQL (local) or a [Neon](https://neon.tech) account
+- Google Gemini API key
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/sreesaivardhan/nextask.git
+cd nextask
+
+# 2. Install server dependencies
+cd server && npm install
+
+# 3. Install client dependencies
+cd ../client && npm install
 ```
-Frontend (React/Vite)
-       ↓
-REST API (Express)
-       ↓
-WebSocket (Socket.io)
-       ↓
-Database (Prisma + PostgreSQL)
-       ↓
-AI Scheduler (Node-Cron + Gemini)
+
+### Database Setup
+
+```bash
+cd server
+
+# Apply migrations to your local database
+npx prisma migrate dev
+
+# Generate the Prisma client
+npx prisma generate
 ```
-The architecture employs a hybrid approach. Standard CRUD operations traverse the REST API, immediately broadcasting successful state mutations to all subscribed clients via WebSockets. The AI Scheduler runs asynchronously in the background, continuously analyzing database states without blocking the main event loop or user requests.
 
----
+### Running Locally
 
-## 5. Real-Time Architecture
+```bash
+# Terminal 1 — Backend (http://localhost:3001)
+cd server
+npm run dev
 
-The real-time layer operates over WebSockets with `socket.io`.
-* **Socket Rooms:** Each board is an isolated Socket room (`board:123`), ensuring clients only receive relevant traffic.
-* **Event Broadcasting:** When a user moves a card, the server validates the move via REST, updates PostgreSQL, and emits a `CARD_MOVED` event to the room.
-* **Live Synchronization:** connected clients apply the event payload to their local Zustand state instantly. Polling is completely absent from the collaborative workflow.
-
----
-
-## 6. Conflict Resolution
-
-To maintain data integrity during intense collaborative sessions, NexTask uses **Optimistic Concurrency Control**:
-* **Version Field:** Every Card has a monotonically increasing `version` integer.
-* **HTTP 409 Conflict:** When an update request arrives, the server compares the provided version with the database version. If they mismatch, a `409 Conflict` is thrown.
-* **Last Write Wins & Visible Conflict Dialog:** If a conflict occurs, the client intercepts the 409 and displays a UI dialog alerting the user that the card was modified by someone else. The user can optionally override (force push) their changes, guaranteeing zero silent data loss.
-
----
-
-## 7. AI Methodology
-
-NexTask's AI does not just summarize text; it infers state:
-* **Bottleneck Detection:** Analyzes the distribution of cards across columns relative to team size.
-* **Sprint Risk:** Evaluates (Completed SP / Total SP) against elapsed sprint time to compute a confidence interval.
-* **Deadline Prediction:** Cross-references individual card complexity, assignee workload, and remaining sprint days.
-* **Complexity Inference:** When a card is created, Gemini is prompted to estimate effort on a Fibonacci scale based on standard software engineering paradigms.
-* **Weekly Digest:** Aggregates 7-day velocity logs.
-
-Analyses stream independently into the AI Insights panel via asynchronous chron jobs, ensuring the UI is never blocked waiting for LLM inference.
-
----
-
-## 8. GitHub Import Methodology
-
-* **Pagination:** Fetches up to 100 issues per page, recursively following the `Link` header.
-* **Deduplication:** A unique composite index (`boardId_githubRepo_githubIssueNumber`) prevents identical issues from being imported twice.
-* **Performance Decisions:** To ensure Railway's free-tier memory is not exhausted by large repositories, imports are currently capped at 20 issues per request, though the underlying architecture fully supports arbitrary depths.
-
----
-
-## 9. Project Structure
-
-```
-NexTask/
-├── client/              # React frontend
-│   ├── src/
-│   │   ├── components/  # Reusable UI components
-│   │   ├── layouts/     # Page wrappers
-│   │   ├── pages/       # Route components
-│   │   ├── stores/      # Zustand state management
-│   │   └── routes/      # React Router config
-├── server/              # Express backend
-│   ├── prisma/          # Database schema & migrations
-│   ├── src/
-│   │   ├── controllers/ # Route handlers
-│   │   ├── services/    # Business logic & AI Integration
-│   │   ├── repositories/# Database access layer
-│   │   └── utils/       # Helpers
-└── extension/           # Chrome Extension
-    ├── src/
-    └── public/
+# Terminal 2 — Frontend (http://localhost:5173)
+cd client
+npm run dev
 ```
 
 ---
 
-## 10. Installation
+## Environment Variables
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/nextask.git
-   cd nextask
-   ```
-2. **Install dependencies:**
-   ```bash
-   cd server && npm install
-   cd ../client && npm install
-   ```
-3. **Environment Setup:**
-   Create a `.env` file in the `server` directory (see Section 11).
-4. **Database Setup:**
-   ```bash
-   cd server
-   npx prisma migrate dev
-   ```
-5. **Run the application:**
-   ```bash
-   # Terminal 1 - Backend
-   cd server
-   npm run dev
-
-   # Terminal 2 - Frontend
-   cd client
-   npm run dev
-   ```
-
----
-
-## 11. Environment Variables
-
-Create a `.env` inside the `server/` directory:
+Create a `server/.env` file with the following variables:
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/nextask"
+# ─── Database ─────────────────────────────────────────────────────────────────
+# For Neon: use the pooled connection string for DATABASE_URL
+# and the direct connection string for DIRECT_URL
+DATABASE_URL="postgresql://user:password@host:6543/neondb?pgbouncer=true"
+DIRECT_URL="postgresql://user:password@host:5432/neondb"
 
-# Authentication
-SESSION_SECRET="your_secure_secret"
+# For local development, both can point to the same Postgres instance:
+# DATABASE_URL="postgresql://postgres:password@localhost:5432/nextask"
+# DIRECT_URL="postgresql://postgres:password@localhost:5432/nextask"
+
+# ─── App ──────────────────────────────────────────────────────────────────────
+NODE_ENV=development
+PORT=3001
+SESSION_SECRET="replace_with_64_char_random_string"
+
+# ─── URLs ─────────────────────────────────────────────────────────────────────
+# Comma-separated list of allowed client origins
 CLIENT_URL="http://localhost:5173"
-SERVER_URL="http://localhost:3000"
+# Public URL of this backend (used to construct OAuth callback URLs)
+SERVER_URL="http://localhost:3001"
 
-# AI
+# ─── AI ───────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY="your_google_gemini_api_key"
+AI_ANALYSIS_INTERVAL_MINUTES=360
 
-# OAuth (Optional)
+# ─── Google OAuth ─────────────────────────────────────────────────────────────
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
+
+# ─── GitHub OAuth ─────────────────────────────────────────────────────────────
 GITHUB_CLIENT_ID=""
 GITHUB_CLIENT_SECRET=""
 
-# Email Service (Optional for Forgot Password)
-SMTP_HOST=""
-SMTP_PORT=""
-SMTP_USER=""
-SMTP_PASS=""
-SMTP_FROM=""
+# ─── GitHub API (for issue import) ────────────────────────────────────────────
+GITHUB_TOKEN=""
+
+# ─── Email (Gmail App Password) ───────────────────────────────────────────────
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="your_email@gmail.com"
+SMTP_PASS="your_gmail_app_password"
+SMTP_FROM="NexTask <your_email@gmail.com>"
+```
+
+> **Generate a strong session secret:**
+> ```bash
+> openssl rand -hex 64
+> ```
+
+---
+
+## Production Deployment
+
+NexTask is deployed across three services:
+Database - Neon PostgreSQL
+
+| Service | Platform | URL |
+|---|---|---|
+| Frontend | Vercel | https://nextask-flame.vercel.app |
+| Backend | Render | https://nexttask-backend.onrender.com |
+
+### Backend (Render)
+
+| Setting | Value |
+|---|---|
+| **Root Directory** | `server` |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `npm run start:prod` |
+| **Health Check Path** | `/health` |
+
+The `build` script runs `prisma generate && tsc`.  
+The `start:prod` script runs `prisma migrate deploy && node dist/server.js` — automatically applying pending schema migrations on every deploy.
+
+**Required Render environment variables:**
+
+```
+DATABASE_URL    → Neon pooled connection string (port 6543, pgbouncer=true)
+DIRECT_URL      → Neon direct connection string (port 5432)
+SESSION_SECRET  → 64-char random string
+CLIENT_URL      → https://nextask-flame.vercel.app
+SERVER_URL      → https://nexttask-backend.onrender.com
+NODE_ENV        → production
+GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET
+GITHUB_TOKEN
+SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_FROM
+GEMINI_API_KEY
+AI_ANALYSIS_INTERVAL_MINUTES
+```
+
+### Frontend (Vercel)
+
+Set a single environment variable in Vercel → Project Settings → Environment Variables:
+
+```
+VITE_API_URL=https://nexttask-backend.onrender.com
+```
+
+### OAuth Callback URLs
+
+After deploying, register these exact URLs:
+
+**Google Cloud Console → Authorized Redirect URIs:**
+```
+https://nexttask-backend.onrender.com/api/auth/google/callback
+```
+
+**GitHub → OAuth App → Authorization callback URL:**
+```
+https://nexttask-backend.onrender.com/api/auth/github/callback
+```
+
+### Neon Connection Pooling
+
+NexTask uses Neon's PgBouncer integration to maximise connection efficiency:
+
+- `DATABASE_URL` → pooled endpoint (port **6543**, `?pgbouncer=true`) — used by Prisma for all queries
+- `DIRECT_URL` → direct endpoint (port **5432**) — used only by `prisma migrate deploy`
+
+This prevents connection exhaustion on Neon's serverless infrastructure under concurrent Socket.IO sessions.
+
+---
+
+## Chrome Extension
+
+The NexTask Chrome Extension lets you clip selected text or page URLs directly into a Kanban card from any website.
+
+### Build & Install
+
+```bash
+cd extension
+npm install
+npm run build
+```
+
+1. Open `chrome://extensions/`
+2. Enable **Developer mode** (top right)
+3. Click **Load unpacked** → select `extension/dist/`
+4. Click the NexTask icon, log in, and start clipping
+
+> The extension communicates directly with the production backend at `https://nexttask-backend.onrender.com`. Sessions are shared with the web app via the `connect.sid` cookie using a custom `X-Extension-Session` header to work around Chrome's cross-origin cookie restrictions.
+
+---
+
+## Project Structure
+
+```
+nextask/
+├── client/                 # React + Vite frontend (Vercel)
+│   └── src/
+│       ├── components/     # Reusable UI components
+│       ├── layouts/        # Page wrappers (AppLayout, AuthLayout)
+│       ├── pages/          # Route-level components
+│       ├── services/       # API client, Socket.IO service
+│       ├── stores/         # Zustand state management
+│       └── routes/         # React Router configuration
+│
+├── server/                 # Express + Prisma backend (Render)
+│   ├── prisma/
+│   │   ├── schema.prisma   # Database schema
+│   │   └── migrations/     # Applied migration history
+│   └── src/
+│       ├── config/         # env.ts, cors.ts, session.ts
+│       ├── controllers/    # Route handlers
+│       ├── services/       # Business logic, AI, OAuth, Email
+│       ├── repositories/   # Prisma data-access layer
+│       ├── middleware/      # Auth, error handler, logger
+│       ├── routes/         # Express router definitions
+│       ├── socket/         # Socket.IO initialisation + rooms
+│       └── utils/          # Shared helpers
+│
+└── extension/              # Chrome Extension (Manifest V3)
+    └── src/
+        ├── popup/          # React popup UI
+        ├── background/     # Service worker
+        └── content/        # Content script (text selection)
 ```
 
 ---
 
-## 12. Railway Deployment
+## Real-Time Architecture
 
-NexTask is fully configured for deployment on [Railway](https://railway.app/).
-* **Database:** Provision a PostgreSQL instance.
-* **Backend:** Deploy the `server` folder. Set the **Build Command** to `npm install && npx prisma generate` and **Start Command** to `npm start`.
-* **Frontend:** Deploy the `client` folder. Framework preset: Vite.
-* **Environment Variables:** Map the frontend URL to `CLIENT_URL` and backend URL to `SERVER_URL`. Configure OAuth callbacks to point to the production backend URL.
+The real-time layer uses **Socket.IO over WebSocket** with a session-sharing bridge.
 
----
-
-## 13. Chrome Extension
-
-The NexTask Chrome extension allows you to send tasks directly from the web.
-1. Navigate to the `extension/` directory.
-2. Run `npm install` then `npm run build`.
-3. Open Chrome and navigate to `chrome://extensions/`.
-4. Enable **Developer mode** in the top right.
-5. Click **Load unpacked** and select the `extension/dist` folder.
-6. Click the extension icon, log in to your NexTask account, and start clipping!
+- **Board rooms:** Each board lives in an isolated Socket.IO room (`boardId`). Clients subscribe on load and unsubscribe on navigate.
+- **User rooms:** Every authenticated socket auto-joins a `user:<id>` room — enabling notifications like "board shared with you" to reach the dashboard without the user being inside a board.
+- **Mutation flow:** REST → PostgreSQL → Socket.IO broadcast. No polling. Zero latency between persistence and client update.
+- **Reconnection:** `reconnectionAttempts: Infinity` with exponential backoff. Board room automatically re-joined after reconnect.
+- **Session bridge:** Socket.IO engine shares the Express session middleware, making `req.session.userId` available on every connected socket for server-side authorization.
 
 ---
 
-## 14. Concurrent User Testing
+## AI Methodology
 
-NexTask was architecturally designed to handle concurrent modifications. While rigorous load testing tools were not utilized, collaborative capabilities were heavily validated through **manual simultaneous multi-browser testing**.
+NexTask's AI scheduler operates **asynchronously and independently** — it never blocks the request lifecycle.
 
-**Methodology:**
-Multiple isolated browser sessions (normal, incognito, and separate profiles) were connected to the same board simultaneously.
-* **Drag Synchronization:** Moving a card in Browser A was observed to visually snap to the correct column in Browser B in near real-time (~30ms latency locally).
-* **Conflict Handling Verification:** Browser A and Browser B opened the same card. Browser A saved changes. When Browser B subsequently attempted to save, the backend correctly rejected the request with a `409 Conflict`, and the UI successfully displayed the "Card Modified by Another User" warning dialog.
-* **Socket Stability:** Disconnects and reconnects gracefully re-established room subscriptions without duplicate event dispatching.
+| Analysis | Method |
+|---|---|
+| **Bottleneck Detection** | Compares current column card counts against rolling averages; flags deviation > 1.5σ |
+| **Sprint Risk** | `(completed SP / total SP) vs (elapsed days / total sprint days)` → confidence interval |
+| **Deadline Prediction** | Per-card: complexity × assignee load × remaining sprint days → deadline risk score |
+| **Story Point Inference** | Gemini prompted with card title + description → Fibonacci estimate with reasoning |
+| **Weekly Digest** | 7-day velocity aggregation, WIP trend, top bottleneck, AI-generated recommendations |
 
-The architecture robustly supports 10+ concurrent users per board without silent data overrides.
-
----
-
-## 15. Future Improvements
-
-The following features were scoped out of the current sprint but remain on the roadmap:
-* **Board Templates:** Pre-configured column layouts (e.g., Scrum, Bug Tracking).
-* **Dependency Mapping:** Visualizing blocking relationships between tasks.
-* **Time Tracking:** Integrated stopwatch and estimated vs. actual time logs.
-* **Public Sharing:** Read-only links for external stakeholders.
+All results are written to the `AIInsight` and `WeeklyDigest` tables and pushed to the client via Socket.IO — the UI updates without any polling.
 
 ---
 
-## 16. License
+## Concurrent User Testing
 
-This project is licensed under the MIT License.
+NexTask was validated under simultaneous multi-user workloads across multiple isolated browser sessions:
+
+| Scenario | Result |
+|---|---|
+| Card move sync across browsers | ~30ms observed latency locally |
+| Simultaneous card edit (409 conflict) | Conflict dialog shown correctly — zero silent data loss |
+| Socket disconnect + reconnect | Board room rejoined automatically, no duplicate events |
+| 10+ concurrent users on one board | Stable — no data races or silent overwrites observed |
+
+---
+
+## Future Improvements
+
+| Feature | Status |
+|---|---|
+| Dependency mapping (blocking relationships) | Planned |
+| Time tracking (estimated vs actual) | Planned |
+| Public read-only board links | Planned |
+| Mobile-responsive PWA | Planned |
+| Webhook-based GitHub sync | Planned |
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
